@@ -81,12 +81,12 @@ class AudioEngine: ObservableObject {
         let duration: Double = 0.3
         let frameCount = AVAudioFrameCount(sampleRate * duration)
         
-        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1),
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2),
               let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return }
         
         buffer.frameLength = frameCount
         
-        guard let floatData = buffer.floatChannelData?[0] else { return }
+        guard let floatData = buffer.floatChannelData else { return }
         
         // Generate different sounds based on pad type
         for frame in 0..<Int(frameCount) {
@@ -136,7 +136,9 @@ class AudioEngine: ObservableObject {
                 sample = 0
             }
             
-            floatData[frame] = sample * 0.8 // Master volume
+            // Write to both stereo channels
+            floatData[0][frame] = sample * 0.8 // Left channel
+            floatData[1][frame] = sample * 0.8 // Right channel
         }
         
         buffers[pad.id] = buffer
