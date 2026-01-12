@@ -22,31 +22,30 @@ struct PlayView: View {
             AppGradients.background
                 .ignoresSafeArea()
             
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Header
-                    Text("Chicken DJ")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundColor(AppColors.text)
-                        .padding(.top, 20)
-                    
-                    // Mascot - tap to cluck!
-                    MascotView(isPecking: $isPecking) {
-                        audioEngine.playCluck()
-                    }
-                    .frame(height: 150)
-                    
-                    // Pads grid
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(Pad.allPads) { pad in
-                            PadView(pad: pad) {
-                                playPad(pad)
-                            }
+            VStack(spacing: 12) {
+                // Header
+                Text("Chicken DJ")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundColor(AppColors.text)
+                    .padding(.top, 10)
+                
+                // Mascot - tap to cluck!
+                MascotView(isPecking: $isPecking) {
+                    audioEngine.playCluck()
+                }
+                .frame(height: 100)
+                
+                // Pads grid
+                LazyVGrid(columns: columns, spacing: 12) {
+                    ForEach(Pad.allPads) { pad in
+                        PadView(pad: pad) {
+                            playPad(pad)
                         }
                     }
-                    .padding(.horizontal, 30)
-                    
-                    Spacer(minLength: 20)
+                }
+                .padding(.horizontal, 20)
+                
+                Spacer()
                     
                     // Controls
                     VStack(spacing: 16) {
@@ -129,10 +128,9 @@ struct PlayView: View {
                             .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                         }
                     }
-                    .padding(.bottom, 80)
+                    .padding(.bottom, 10)
                 }
             }
-        }
         .preferredColorScheme(.light)
         .environmentObject(audioEngine)
         .alert("Save Loop", isPresented: $showingSaveAlert) {
