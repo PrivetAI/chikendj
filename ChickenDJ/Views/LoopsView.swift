@@ -2,7 +2,8 @@ import SwiftUI
 
 struct LoopsView: View {
     @EnvironmentObject var loopStorage: LoopStorage
-    @State private var selectedLoop: SavedLoop?
+    @StateObject private var audioEngine = AudioEngine()
+    @StateObject private var loopPlayer = LoopPlayer()
     
     var body: some View {
         ZStack {
@@ -48,11 +49,20 @@ struct LoopsView: View {
                     // Loops list
                     ScrollView {
                         LazyVStack(spacing: 12) {
-                            ForEach(loopStorage.savedLoops) { loop in
-                                LoopRowView(loop: loop) {
-                                    selectedLoop = loop
+                            ForEach(loopStorage.savedLoops) { savedLoop in
+                                LoopRowView(
+                                    loop: savedLoop,
+                                    isPlaying: loopPlayer.currentLoopId == savedLoop.id
+                                ) {
+                                    if loopPlayer.currentLoopId == savedLoop.id {
+                                        loopPlayer.stop()
+                                    } else {
+                                        loopPlayer.play(savedLoop.loop, id: savedLoop.id) { padId in
+                                            audioEngine.playSound(forPadId: padId)
+                                        }
+                                    }
                                 } onDelete: {
-                                    loopStorage.deleteLoop(loop)
+                                    loopStorage.deleteLoop(savedLoop)
                                 }
                             }
                         }
@@ -65,8 +75,61 @@ struct LoopsView: View {
     }
 }
 
+// MARK: - Loop Player
+class LoopPlayer: ObservableObject {
+    @Published var currentLoopId: UUID?
+    @Published var isPlaying = false
+    
+    private var playbackTimer: Timer?
+    private var currentEventIndex = 0
+    
+    func play(_ loop: Loop, id: UUID, onEvent: @escaping (Int) -> Void) {
+        stop()
+        
+        guard !loop.events.isEmpty else { return }
+        
+        currentLoopId = id
+        isPlaying = true
+        currentEventIndex = 0
+        
+        let startTime = Date()
+        
+        playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { [weak self] timer in
+            guard let self = self, self.isPlaying else {
+                timer.invalidate()
+                return
+            }
+            
+            let elapsed = Date().timeIntervalSince(startTime)
+            
+            while self.currentEventIndex < loop.events.count {
+                let event = loop.events[self.currentEventIndex]
+                if event.timestamp <= elapsed {
+                    onEvent(event.padId)
+                    self.currentEventIndex += 1
+                } else {
+                    break
+                }
+            }
+            
+            if self.currentEventIndex >= loop.events.count {
+                self.stop()
+            }
+        }
+    }
+    
+    func stop() {
+        playbackTimer?.invalidate()
+        playbackTimer = nil
+        isPlaying = false
+        currentLoopId = nil
+        currentEventIndex = 0
+    }
+}
+
 struct LoopRowView: View {
     let loop: SavedLoop
+    let isPlaying: Bool
     let onPlay: () -> Void
     let onDelete: () -> Void
     
@@ -75,14 +138,14 @@ struct LoopRowView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                // Play button
+                // Play/Stop button
                 Button(action: onPlay) {
                     ZStack {
                         Circle()
-                            .fill(AppColors.coral)
+                            .fill(isPlaying ? Color.red : AppColors.coral)
                             .frame(width: 44, height: 44)
                         
-                        Image(systemName: "play.fill")
+                        Image(systemName: isPlaying ? "stop.fill" : "play.fill")
                             .font(.system(size: 18))
                             .foregroundColor(AppColors.egg)
                     }

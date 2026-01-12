@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SettingsView: View {
     @AppStorage("hapticEnabled") private var hapticEnabled = true
-    @AppStorage("defaultBPM") private var defaultBPM = 120.0
     
     var body: some View {
         ZStack {
@@ -27,17 +26,6 @@ struct SettingsView: View {
                         ) {
                             Toggle("", isOn: $hapticEnabled)
                                 .tint(AppColors.coral)
-                        }
-                        
-                        // Default BPM
-                        SettingsRow(
-                            icon: "metronome",
-                            title: "Default BPM",
-                            subtitle: "\(Int(defaultBPM)) beats per minute"
-                        ) {
-                            Slider(value: $defaultBPM, in: 60...180, step: 5)
-                                .accentColor(AppColors.coral)
-                                .frame(width: 100)
                         }
                         
                         // About section
