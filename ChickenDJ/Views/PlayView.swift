@@ -128,7 +128,7 @@ struct PlayView: View {
                         .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                     }
                 }
-                .padding(.bottom, 50)
+                .padding(.bottom, 100)
             }
         }
         .preferredColorScheme(.light)
