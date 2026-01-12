@@ -5,27 +5,55 @@ struct MainTabView: View {
     @StateObject private var loopStorage = LoopStorage()
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Content
-            Group {
-                switch selectedTab {
-                case 0:
-                    PlayView()
-                case 1:
-                    LoopsView()
-                case 2:
-                    SettingsView()
-                default:
-                    PlayView()
+        TabView(selection: $selectedTab) {
+            PlayView()
+                .tabItem {
+                    Image(systemName: "music.note.house")
+                    Text("Play")
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .tag(0)
             
-            // Custom Tab Bar
-            CustomTabBar(selectedTab: $selectedTab)
+            LoopsView()
+                .tabItem {
+                    Image(systemName: "repeat")
+                    Text("Loops")
+                }
+                .tag(1)
+            
+            SettingsView()
+                .tabItem {
+                    Image(systemName: "gearshape")
+                    Text("Settings")
+                }
+                .tag(2)
         }
+        .accentColor(AppColors.coral)
         .environmentObject(loopStorage)
         .preferredColorScheme(.light)
+        .onAppear {
+            setupTabBarAppearance()
+        }
+    }
+    
+    private func setupTabBarAppearance() {
+        let appearance = UITabBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = UIColor(AppColors.surface)
+        
+        appearance.stackedLayoutAppearance.normal.iconColor = UIColor(AppColors.textSecondary)
+        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
+            .foregroundColor: UIColor(AppColors.textSecondary)
+        ]
+        
+        appearance.stackedLayoutAppearance.selected.iconColor = UIColor(AppColors.coral)
+        appearance.stackedLayoutAppearance.selected.titleTextAttributes = [
+            .foregroundColor: UIColor(AppColors.coral)
+        ]
+        
+        UITabBar.appearance().standardAppearance = appearance
+        if #available(iOS 15.0, *) {
+            UITabBar.appearance().scrollEdgeAppearance = appearance
+        }
     }
 }
 
