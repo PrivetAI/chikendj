@@ -27,7 +27,7 @@ struct PlayView: View {
                 Text("Chicken DJ")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.text)
-                    .padding(.top, 100)
+                    .padding(.top, 110)
                 
                 // Mascot - tap to cluck!
                 MascotView(isPecking: $isPecking) {
