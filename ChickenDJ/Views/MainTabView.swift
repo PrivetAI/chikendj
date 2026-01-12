@@ -33,39 +33,40 @@ struct CustomTabBar: View {
     @Binding var selectedTab: Int
     
     var body: some View {
-        HStack(spacing: 0) {
-            TabBarButton(
-                icon: AnyView(PlayTabIcon()),
-                title: "Play",
-                isSelected: selectedTab == 0,
-                action: { selectedTab = 0 }
-            )
-            
-            Spacer()
-            
-            TabBarButton(
-                icon: AnyView(LoopsTabIcon()),
-                title: "Loops",
-                isSelected: selectedTab == 1,
-                action: { selectedTab = 1 }
-            )
-            
-            Spacer()
-            
-            TabBarButton(
-                icon: AnyView(SettingsTabIcon()),
-                title: "Settings",
-                isSelected: selectedTab == 2,
-                action: { selectedTab = 2 }
-            )
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                TabBarButton(
+                    icon: AnyView(PlayTabIcon()),
+                    title: "Play",
+                    isSelected: selectedTab == 0,
+                    action: { selectedTab = 0 }
+                )
+                
+                Spacer()
+                
+                TabBarButton(
+                    icon: AnyView(LoopsTabIcon()),
+                    title: "Loops",
+                    isSelected: selectedTab == 1,
+                    action: { selectedTab = 1 }
+                )
+                
+                Spacer()
+                
+                TabBarButton(
+                    icon: AnyView(SettingsTabIcon()),
+                    title: "Settings",
+                    isSelected: selectedTab == 2,
+                    action: { selectedTab = 2 }
+                )
+            }
+            .padding(.horizontal, 40)
+            .padding(.vertical, 12)
         }
-        .padding(.horizontal, 40)
-        .padding(.top, 12)
-        .padding(.bottom, 8)
-        .background(AppColors.surface)
-        .safeAreaInset(edge: .bottom) {
-            Color.clear.frame(height: 0)
-        }
+        .background(
+            AppColors.surface
+                .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: -4)
+        )
     }
 }
 
