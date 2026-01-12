@@ -34,7 +34,7 @@ struct PlayView: View {
                     audioEngine.playCluck()
                 }
                 .frame(height: 100)
-                .padding(.top, 10)
+                .padding(.top, 40)
                 
                 // Pads grid
                 LazyVGrid(columns: columns, spacing: 12) {
