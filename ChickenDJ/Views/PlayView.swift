@@ -3,9 +3,13 @@ import SwiftUI
 struct PlayView: View {
     @StateObject private var audioEngine = AudioEngine()
     @StateObject private var loopManager = LoopManager()
+    @EnvironmentObject var loopStorage: LoopStorage
+    
+    @State private var showingSaveAlert = false
+    @State private var loopName = ""
     
     @State private var isPecking = false
-    @State private var bpm: Double = 120
+    @State private var recordingPulse = false
     
     let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -23,11 +27,13 @@ struct PlayView: View {
                 Text("Chicken DJ")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.text)
-                    .padding(.top, 10)
+                    .padding(.top, 50)
                 
-                // Mascot
-                MascotView(isPecking: $isPecking)
-                    .frame(height: 150)
+                // Mascot - tap to cluck!
+                MascotView(isPecking: $isPecking) {
+                    audioEngine.playCluck()
+                }
+                .frame(height: 150)
                 
                 // Pads grid
                 LazyVGrid(columns: columns, spacing: 16) {
@@ -43,22 +49,6 @@ struct PlayView: View {
                 
                 // Controls
                 VStack(spacing: 16) {
-                    // BPM Control
-                    HStack {
-                        Text("BPM")
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundColor(AppColors.textSecondary)
-                        
-                        Slider(value: $bpm, in: 60...180, step: 1)
-                            .accentColor(AppColors.coral)
-                        
-                        Text("\(Int(bpm))")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(AppColors.coral)
-                            .frame(width: 40)
-                    }
-                    .padding(.horizontal, 30)
-                    
                     // Record/Play buttons
                     HStack(spacing: 20) {
                         // Record button
@@ -69,6 +59,8 @@ struct PlayView: View {
                                 Circle()
                                     .fill(loopManager.isRecording ? Color.red : AppColors.coral)
                                     .frame(width: 16, height: 16)
+                                    .scaleEffect(recordingPulse ? 1.3 : 1.0)
+                                    .opacity(recordingPulse ? 0.7 : 1.0)
                                 
                                 Text(loopManager.isRecording ? "Stop" : "Record")
                                     .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -80,6 +72,15 @@ struct PlayView: View {
                                 RoundedRectangle(cornerRadius: 25)
                                     .fill(loopManager.isRecording ? Color.red : AppColors.coral)
                             )
+                        }
+                        .onChange(of: loopManager.isRecording) { isRecording in
+                            if isRecording {
+                                withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+                                    recordingPulse = true
+                                }
+                            } else {
+                                recordingPulse = false
+                            }
                         }
                         
                         // Play button
@@ -103,13 +104,49 @@ struct PlayView: View {
                         }
                         .disabled(!loopManager.hasRecording)
                         .opacity(loopManager.hasRecording ? 1.0 : 0.5)
+                        
+                        // Save button
+                        Button(action: {
+                            showingSaveAlert = true
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "square.and.arrow.down")
+                                    .font(.system(size: 14))
+                                
+                                Text("Save")
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            }
+                            .foregroundColor(AppColors.egg)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 25)
+                                    .fill(AppColors.text)
+                            )
+                        }
+                        .disabled(!loopManager.hasRecording)
+                        .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                     }
                 }
-                .padding(.bottom, 30)
+                .padding(.bottom, 50)
             }
         }
         .preferredColorScheme(.light)
         .environmentObject(audioEngine)
+        .alert("Save Loop", isPresented: $showingSaveAlert) {
+            TextField("Loop name", text: $loopName)
+            Button("Cancel", role: .cancel) {
+                loopName = ""
+            }
+            Button("Save") {
+                if let loop = loopManager.getCurrentLoop(), !loopName.isEmpty {
+                    loopStorage.saveLoop(loop, name: loopName)
+                }
+                loopName = ""
+            }
+        } message: {
+            Text("Enter a name for your loop")
+        }
     }
     
     private func playPad(_ pad: Pad) {
@@ -130,7 +167,7 @@ struct PlayView: View {
         if loopManager.isRecording {
             loopManager.stopRecording()
         } else {
-            loopManager.startRecording(bpm: Int(bpm))
+            loopManager.startRecording()
         }
     }
     
@@ -161,8 +198,8 @@ class LoopManager: ObservableObject {
     private var playbackTimer: Timer?
     private var currentEventIndex = 0
     
-    func startRecording(bpm: Int) {
-        currentLoop = Loop(bpm: bpm)
+    func startRecording() {
+        currentLoop = Loop()
         recordingStartTime = Date()
         isRecording = true
         hasRecording = false
@@ -171,6 +208,10 @@ class LoopManager: ObservableObject {
     func stopRecording() {
         isRecording = false
         hasRecording = (currentLoop?.events.count ?? 0) > 0
+    }
+    
+    func getCurrentLoop() -> Loop? {
+        return currentLoop
     }
     
     func recordEvent(padId: Int) {

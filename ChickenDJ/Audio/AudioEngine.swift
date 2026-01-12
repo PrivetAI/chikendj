@@ -37,9 +37,18 @@ class AudioEngine: ObservableObject {
             players[pad.id] = player
         }
         
+        // Add chicken cluck player (id 99)
+        let cluckPlayer = AVAudioPlayerNode()
+        engine.attach(cluckPlayer)
+        engine.connect(cluckPlayer, to: engine.mainMixerNode, format: nil)
+        players[99] = cluckPlayer
+        
         do {
             try engine.start()
             isReady = true
+            
+            // Generate cluck sound
+            generateCluckSound()
         } catch {
             print("Failed to start audio engine: \(error)")
         }
@@ -108,19 +117,31 @@ class AudioEngine: ObservableObject {
                 let noise = Float.random(in: -1...1)
                 sample = noise * Float(envelope * envelope * envelope)
                 
-            case 3: // Clap - layered noise bursts
+            case 3: // Clap - layered noise bursts with filtering
                 let noise = Float.random(in: -1...1)
-                let burst = time < 0.02 || (time > 0.03 && time < 0.05) ? 1.0 : 0.3
-                sample = noise * Float(envelope * burst)
+                // Multiple short bursts to simulate hand clap
+                let burst1 = time < 0.015 ? 1.0 : 0.0
+                let burst2 = (time > 0.02 && time < 0.035) ? 0.8 : 0.0
+                let burst3 = (time > 0.04 && time < 0.06) ? 0.6 : 0.0
+                let burst = burst1 + burst2 + burst3
+                // Add some mid-frequency content
+                let midFreq = Float(sin(2.0 * .pi * 1200 * time) * 0.3)
+                sample = (noise * 0.7 + midFreq) * Float(envelope * burst)
                 
             case 4: // Tom - mid frequency sine
                 let freq = 120.0 * (1.0 + max(0, 0.05 - time) * 10)
                 sample = Float(sin(2.0 * .pi * freq * time) * envelope)
                 
-            case 5: // Cymbal - high frequency noise
-                let noise = Float.random(in: -1...1)
-                let longEnvelope = max(0, 1.0 - time / (duration * 2))
-                sample = noise * Float(longEnvelope) * 0.5
+            case 5: // Cymbal - metallic high frequency
+                let noise = Float.random(in: -1...1) * 0.4
+                // Multiple high-frequency sine waves for metallic sound
+                let freq1 = sin(2.0 * .pi * 3000 * time)
+                let freq2 = sin(2.0 * .pi * 5500 * time) * 0.6
+                let freq3 = sin(2.0 * .pi * 8000 * time) * 0.3
+                let metallic = Float(freq1 + freq2 + freq3) * 0.2
+                // Longer decay for cymbal
+                let longEnvelope = max(0, 1.0 - time / (duration * 3))
+                sample = (noise + metallic) * Float(longEnvelope)
                 
             case 6: // Cowbell - two sine waves
                 let s1 = sin(2.0 * .pi * 560 * time)
@@ -160,5 +181,45 @@ class AudioEngine: ObservableObject {
         for player in players.values {
             player.stop()
         }
+    }
+    
+    func playCluck() {
+        playSound(forPadId: 99)
+    }
+    
+    private func generateCluckSound() {
+        let sampleRate: Double = 44100
+        let duration: Double = 0.25
+        let frameCount = AVAudioFrameCount(sampleRate * duration)
+        
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2),
+              let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return }
+        
+        buffer.frameLength = frameCount
+        
+        guard let floatData = buffer.floatChannelData else { return }
+        
+        for frame in 0..<Int(frameCount) {
+            let time = Double(frame) / sampleRate
+            let envelope = max(0, 1.0 - time / duration)
+            
+            // Chicken cluck - frequency modulated tone
+            let freqMod = 1.0 + 0.35 * sin(2.0 * .pi * 40 * time)
+            let baseFreq = 380.0 * freqMod
+            let tone = Float(sin(2.0 * .pi * baseFreq * time))
+            
+            // Add harmonics for richer sound
+            let harmonic1 = Float(sin(2.0 * .pi * baseFreq * 2.2 * time) * 0.25)
+            let harmonic2 = Float(sin(2.0 * .pi * baseFreq * 3.1 * time) * 0.1)
+            
+            // Quick attack
+            let attackEnv = min(1.0, time / 0.008)
+            let sample = (tone + harmonic1 + harmonic2) * Float(envelope * envelope * attackEnv) * 0.6
+            
+            floatData[0][frame] = sample
+            floatData[1][frame] = sample
+        }
+        
+        buffers[99] = buffer
     }
 }

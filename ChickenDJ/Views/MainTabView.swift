@@ -60,10 +60,12 @@ struct CustomTabBar: View {
             )
         }
         .padding(.horizontal, 40)
-        .padding(.vertical, 12)
+        .padding(.top, 12)
+        .padding(.bottom, 28)
         .background(
             AppColors.surface
                 .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: -4)
+                .ignoresSafeArea(edges: .bottom)
         )
     }
 }

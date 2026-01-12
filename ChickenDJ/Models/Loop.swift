@@ -3,13 +3,15 @@ import Foundation
 struct Loop: Identifiable, Codable {
     let id: UUID
     var events: [LoopEvent]
-    let bpm: Int
     let createdAt: Date
     
-    init(events: [LoopEvent] = [], bpm: Int = 120) {
+    var duration: TimeInterval {
+        events.last?.timestamp ?? 0
+    }
+    
+    init(events: [LoopEvent] = []) {
         self.id = UUID()
         self.events = events
-        self.bpm = bpm
         self.createdAt = Date()
     }
 }

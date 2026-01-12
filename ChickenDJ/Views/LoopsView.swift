@@ -70,42 +70,68 @@ struct LoopRowView: View {
     let onPlay: () -> Void
     let onDelete: () -> Void
     
+    @State private var isExpanded = false
+    
     var body: some View {
-        HStack(spacing: 16) {
-            // Play button
-            Button(action: onPlay) {
-                ZStack {
-                    Circle()
-                        .fill(AppColors.coral)
-                        .frame(width: 50, height: 50)
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                // Play button
+                Button(action: onPlay) {
+                    ZStack {
+                        Circle()
+                            .fill(AppColors.coral)
+                            .frame(width: 44, height: 44)
+                        
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(AppColors.egg)
+                    }
+                }
+                
+                // Info and pattern preview
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(loop.name)
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(AppColors.text)
+                        
+                        Spacer()
+                        
+                        Text("\(loop.loop.events.count) notes")
+                            .font(.system(size: 12, design: .rounded))
+                            .foregroundColor(AppColors.textSecondary)
+                    }
                     
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(AppColors.egg)
+                    // Mini pattern preview
+                    LoopPatternView(loop: loop.loop, height: 24)
+                }
+                
+                // Expand/Delete buttons
+                VStack(spacing: 8) {
+                    Button(action: { withAnimation { isExpanded.toggle() } }) {
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 14))
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                    
+                    Button(action: onDelete) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 14))
+                            .foregroundColor(AppColors.textSecondary)
+                    }
                 }
             }
+            .padding(14)
             
-            // Info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(loop.name)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundColor(AppColors.text)
+            // Expanded detail view
+            if isExpanded {
+                Divider()
+                    .background(AppColors.textSecondary.opacity(0.2))
                 
-                Text("\(loop.loop.events.count) notes • \(loop.loop.bpm) BPM")
-                    .font(.system(size: 14, design: .rounded))
-                    .foregroundColor(AppColors.textSecondary)
-            }
-            
-            Spacer()
-            
-            // Delete button
-            Button(action: onDelete) {
-                Image(systemName: "trash")
-                    .font(.system(size: 18))
-                    .foregroundColor(AppColors.textSecondary)
+                DetailedLoopPatternView(loop: loop.loop)
+                    .padding(14)
             }
         }
-        .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(AppColors.surface)

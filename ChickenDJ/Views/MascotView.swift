@@ -2,8 +2,11 @@ import SwiftUI
 
 struct MascotView: View {
     @Binding var isPecking: Bool
+    var onTap: (() -> Void)? = nil
+    
     @State private var idleOffset: CGFloat = 0
     @State private var peckRotation: Double = 0
+    @State private var bounceScale: CGFloat = 1.0
     
     var body: some View {
         ZStack {
@@ -85,9 +88,15 @@ struct MascotView: View {
             }
             .offset(y: 50)
         }
+        .scaleEffect(bounceScale)
         .offset(y: idleOffset)
         .rotationEffect(.degrees(isPecking ? -10 : 0), anchor: .bottom)
         .animation(.spring(response: 0.2, dampingFraction: 0.5), value: isPecking)
+        .animation(.spring(response: 0.15, dampingFraction: 0.4), value: bounceScale)
+        .onTapGesture {
+            triggerBounce()
+            onTap?()
+        }
         .onAppear {
             startIdleAnimation()
         }
@@ -111,6 +120,16 @@ struct MascotView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) {
                 peckRotation = 0
+            }
+        }
+    }
+    
+    private func triggerBounce() {
+        bounceScale = 1.15
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            bounceScale = 0.95
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                bounceScale = 1.0
             }
         }
     }
