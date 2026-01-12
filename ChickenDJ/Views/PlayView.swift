@@ -34,6 +34,7 @@ struct PlayView: View {
                     audioEngine.playCluck()
                 }
                 .frame(height: 100)
+                .padding(.top, 10)
                 
                 // Pads grid
                 LazyVGrid(columns: columns, spacing: 12) {
@@ -128,7 +129,7 @@ struct PlayView: View {
                             .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                         }
                     }
-                    .padding(.bottom, 10)
+                    .padding(.bottom, 20)
                 }
             }
         .preferredColorScheme(.light)
