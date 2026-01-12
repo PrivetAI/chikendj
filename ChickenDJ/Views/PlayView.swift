@@ -132,7 +132,6 @@ struct PlayView: View {
                     .padding(.bottom, 20)
                 }
             }
-            .scrollIndicators(.hidden)
         }
         .preferredColorScheme(.light)
         .environmentObject(audioEngine)
