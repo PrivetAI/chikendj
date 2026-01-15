@@ -34,6 +34,11 @@ class LoopStorage: ObservableObject {
         persistLoops()
     }
     
+    func clearAllLoops() {
+        savedLoops.removeAll()
+        persistLoops()
+    }
+    
     private func loadLoops() {
         guard let data = UserDefaults.standard.data(forKey: storageKey),
               let loops = try? JSONDecoder().decode([SavedLoop].self, from: data) else {

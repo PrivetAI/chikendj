@@ -1,7 +1,15 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @EnvironmentObject var loopStorage: LoopStorage
+    @EnvironmentObject var audioEngine: AudioEngine
+    
     @AppStorage("hapticEnabled") private var hapticEnabled = true
+    @AppStorage("metronomeSound") private var metronomeSound = true
+    @AppStorage("quantizeStrength") private var quantizeStrength: Double = 0.5
+    
+    @State private var showingClearAlert = false
+    @State private var showingResetEffectsAlert = false
     
     var body: some View {
         ZStack {
@@ -18,7 +26,31 @@ struct SettingsView: View {
                 
                 ScrollView {
                     VStack(spacing: 16) {
-                        // Haptic feedback toggle
+                        // Audio section
+                        SettingsSectionHeader(title: "Audio")
+                        
+                        SettingsRow(
+                            icon: "speaker.wave.3",
+                            title: "Master Volume",
+                            subtitle: "\(Int(audioEngine.masterVolume * 100))%"
+                        ) {
+                            Slider(value: $audioEngine.masterVolume, in: 0...1)
+                                .tint(AppColors.coral)
+                                .frame(width: 100)
+                        }
+                        
+                        SettingsRow(
+                            icon: "metronome",
+                            title: "Metronome Sound",
+                            subtitle: "Play click on each beat"
+                        ) {
+                            Toggle("", isOn: $metronomeSound)
+                                .tint(AppColors.coral)
+                        }
+                        
+                        // Feedback section
+                        SettingsSectionHeader(title: "Feedback")
+                        
                         SettingsRow(
                             icon: "hand.tap",
                             title: "Haptic Feedback",
@@ -28,34 +60,156 @@ struct SettingsView: View {
                                 .tint(AppColors.coral)
                         }
                         
-                        // About section
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("About")
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                .foregroundColor(AppColors.textSecondary)
-                                .padding(.horizontal, 20)
-                                .padding(.top, 20)
-                            
-                            SettingsInfoRow(
-                                icon: "info.circle",
-                                title: "Version",
-                                value: "1.0"
-                            )
-                            
-                            SettingsInfoRow(
-                                icon: "music.note",
-                                title: "App",
-                                value: "Chicken DJ"
+                        // Data section
+                        SettingsSectionHeader(title: "Data")
+                        
+                        SettingsInfoRow(
+                            icon: "music.note.list",
+                            title: "Saved Loops",
+                            value: "\(loopStorage.savedLoops.count)"
+                        )
+                        
+                        // Reset effects button
+                        Button(action: {
+                            showingResetEffectsAlert = true
+                        }) {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(AppColors.coral.opacity(0.15))
+                                        .frame(width: 44, height: 44)
+                                    
+                                    Image(systemName: "waveform.slash")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(AppColors.coral)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Reset Effects")
+                                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                        .foregroundColor(AppColors.text)
+                                    
+                                    Text("Set all effects to default")
+                                        .font(.system(size: 13, design: .rounded))
+                                        .foregroundColor(AppColors.textSecondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
+                            .padding(16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(AppColors.surface)
+                                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
                             )
                         }
+                        
+                        // Clear all loops button
+                        Button(action: {
+                            showingClearAlert = true
+                        }) {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.red.opacity(0.15))
+                                        .frame(width: 44, height: 44)
+                                    
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(.red)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Clear All Loops")
+                                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                        .foregroundColor(.red)
+                                    
+                                    Text("Delete all saved loops")
+                                        .font(.system(size: 13, design: .rounded))
+                                        .foregroundColor(AppColors.textSecondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
+                            .padding(16)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(AppColors.surface)
+                                    .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+                            )
+                        }
+                        .disabled(loopStorage.savedLoops.isEmpty)
+                        .opacity(loopStorage.savedLoops.isEmpty ? 0.5 : 1.0)
+                        
+                        // About section
+                        SettingsSectionHeader(title: "About")
+                        
+                        SettingsInfoRow(
+                            icon: "info.circle",
+                            title: "Version",
+                            value: "1.1"
+                        )
+                        
+                        SettingsInfoRow(
+                            icon: "music.note",
+                            title: "App",
+                            value: "Chicken DJ"
+                        )
+                        
+                        SettingsInfoRow(
+                            icon: "person.circle",
+                            title: "Developer",
+                            value: "ZMTeam"
+                        )
+                        
+                        Spacer(minLength: 100)
                     }
                     .padding(.horizontal, 20)
                 }
-                
-                Spacer()
             }
         }
         .preferredColorScheme(.light)
+        .alert("Clear All Loops", isPresented: $showingClearAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear All", role: .destructive) {
+                loopStorage.clearAllLoops()
+            }
+        } message: {
+            Text("Are you sure you want to delete all saved loops? This action cannot be undone.")
+        }
+        .alert("Reset Effects", isPresented: $showingResetEffectsAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                audioEngine.applyPreset(.clean)
+                audioEngine.masterVolume = 1.0
+            }
+        } message: {
+            Text("Reset all audio effects to default settings?")
+        }
+    }
+}
+
+// MARK: - Settings Section Header
+
+struct SettingsSectionHeader: View {
+    let title: String
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .foregroundColor(AppColors.textSecondary)
+            Spacer()
+        }
+        .padding(.top, 8)
     }
 }
 
@@ -132,4 +286,6 @@ struct SettingsInfoRow: View {
 
 #Preview {
     SettingsView()
+        .environmentObject(LoopStorage())
+        .environmentObject(AudioEngine())
 }

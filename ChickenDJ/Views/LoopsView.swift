@@ -2,8 +2,14 @@ import SwiftUI
 
 struct LoopsView: View {
     @EnvironmentObject var loopStorage: LoopStorage
-    @StateObject private var audioEngine = AudioEngine()
+    @EnvironmentObject var audioEngine: AudioEngine
     @StateObject private var loopPlayer = LoopPlayer()
+    
+    @State private var exportingLoopId: UUID?
+    @State private var exportedURL: URL?
+    @State private var showingShareSheet = false
+    @State private var showingExportError = false
+    @State private var exportErrorMessage = ""
     
     var body: some View {
         ZStack {
@@ -52,7 +58,8 @@ struct LoopsView: View {
                             ForEach(loopStorage.savedLoops) { savedLoop in
                                 LoopRowView(
                                     loop: savedLoop,
-                                    isPlaying: loopPlayer.currentLoopId == savedLoop.id
+                                    isPlaying: loopPlayer.currentLoopId == savedLoop.id,
+                                    isExporting: exportingLoopId == savedLoop.id
                                 ) {
                                     if loopPlayer.currentLoopId == savedLoop.id {
                                         loopPlayer.stop()
@@ -61,6 +68,8 @@ struct LoopsView: View {
                                             audioEngine.playSound(forPadId: padId)
                                         }
                                     }
+                                } onExport: {
+                                    exportLoop(savedLoop)
                                 } onDelete: {
                                     loopStorage.deleteLoop(savedLoop)
                                 }
@@ -72,7 +81,53 @@ struct LoopsView: View {
             }
         }
         .preferredColorScheme(.light)
+        .sheet(isPresented: $showingShareSheet) {
+            if let url = exportedURL {
+                ShareSheet(items: [url])
+            }
+        }
+        .alert("Export Error", isPresented: $showingExportError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(exportErrorMessage)
+        }
     }
+    
+    private func exportLoop(_ savedLoop: SavedLoop) {
+        exportingLoopId = savedLoop.id
+        
+        let fileName = savedLoop.name.replacingOccurrences(of: " ", with: "_") + ".wav"
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsPath.appendingPathComponent(fileName)
+        
+        // Remove existing file if any
+        try? FileManager.default.removeItem(at: fileURL)
+        
+        audioEngine.renderLoopToFile(loop: savedLoop.loop, url: fileURL) { result in
+            exportingLoopId = nil
+            
+            switch result {
+            case .success(let url):
+                exportedURL = url
+                showingShareSheet = true
+            case .failure(let error):
+                exportErrorMessage = error.localizedDescription
+                showingExportError = true
+            }
+        }
+    }
+}
+
+// MARK: - Share Sheet
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Loop Player
@@ -130,7 +185,9 @@ class LoopPlayer: ObservableObject {
 struct LoopRowView: View {
     let loop: SavedLoop
     let isPlaying: Bool
+    let isExporting: Bool
     let onPlay: () -> Void
+    let onExport: () -> Void
     let onDelete: () -> Void
     
     @State private var isExpanded = false
@@ -169,16 +226,25 @@ struct LoopRowView: View {
                     LoopPatternView(loop: loop.loop, height: 24)
                 }
                 
-                // Expand/Delete buttons
+                // Action buttons
                 VStack(spacing: 8) {
+                    // Export button
+                    Button(action: onExport) {
+                        if isExporting {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                                .frame(width: 20, height: 20)
+                        } else {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 14))
+                                .foregroundColor(AppColors.coral)
+                        }
+                    }
+                    .disabled(isExporting)
+                    
+                    // Expand button
                     Button(action: { withAnimation { isExpanded.toggle() } }) {
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 14))
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                    
-                    Button(action: onDelete) {
-                        Image(systemName: "trash")
                             .font(.system(size: 14))
                             .foregroundColor(AppColors.textSecondary)
                     }
@@ -191,8 +257,26 @@ struct LoopRowView: View {
                 Divider()
                     .background(AppColors.textSecondary.opacity(0.2))
                 
-                DetailedLoopPatternView(loop: loop.loop)
-                    .padding(14)
+                VStack(spacing: 12) {
+                    DetailedLoopPatternView(loop: loop.loop)
+                    
+                    // Delete button
+                    Button(action: onDelete) {
+                        HStack {
+                            Image(systemName: "trash")
+                            Text("Delete Loop")
+                        }
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundColor(.red)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 16)
+                        .background(
+                            Capsule()
+                                .fill(Color.red.opacity(0.1))
+                        )
+                    }
+                }
+                .padding(14)
             }
         }
         .background(
@@ -206,4 +290,5 @@ struct LoopRowView: View {
 #Preview {
     LoopsView()
         .environmentObject(LoopStorage())
+        .environmentObject(AudioEngine())
 }

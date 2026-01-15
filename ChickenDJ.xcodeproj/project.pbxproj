@@ -24,6 +24,8 @@
 		A1000030232F0001 /* LoopStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000031232F0001 /* LoopStorage.swift */; };
 		A1000032232F0001 /* LoopPatternView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000033232F0001 /* LoopPatternView.swift */; };
 		A1000034232F0001 /* SoundGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000035232F0001 /* SoundGenerator.swift */; };
+		A1000036232F0001 /* EffectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000037232F0001 /* EffectsView.swift */; };
+		A1000038232F0001 /* BPMManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000039232F0001 /* BPMManager.swift */; };
 /* End PBXBuildFile section */
 
 
@@ -46,6 +48,8 @@
 		A1000031232F0001 /* LoopStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopStorage.swift; sourceTree = "<group>"; };
 		A1000033232F0001 /* LoopPatternView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopPatternView.swift; sourceTree = "<group>"; };
 		A1000035232F0001 /* SoundGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundGenerator.swift; sourceTree = "<group>"; };
+		A1000037232F0001 /* EffectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EffectsView.swift; sourceTree = "<group>"; };
+		A1000039232F0001 /* BPMManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BPMManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +107,7 @@
 				A100000A232F0001 /* Pad.swift */,
 				A100000C232F0001 /* Loop.swift */,
 				A1000031232F0001 /* LoopStorage.swift */,
+				A1000039232F0001 /* BPMManager.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -118,6 +123,7 @@
 				A100002D232F0001 /* SettingsView.swift */,
 				A100002F232F0001 /* MainTabView.swift */,
 				A1000033232F0001 /* LoopPatternView.swift */,
+				A1000037232F0001 /* EffectsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -216,6 +222,8 @@
 				A1000030232F0001 /* LoopStorage.swift in Sources */,
 				A1000032232F0001 /* LoopPatternView.swift in Sources */,
 				A1000034232F0001 /* SoundGenerator.swift in Sources */,
+				A1000036232F0001 /* EffectsView.swift in Sources */,
+				A1000038232F0001 /* BPMManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
