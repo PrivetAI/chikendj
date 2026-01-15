@@ -480,9 +480,9 @@ enum SoundPack: String, CaseIterable {
     
     var icon: String {
         switch self {
-        case .classic: return "drum"
+        case .classic: return "music.note"
         case .electronic: return "waveform"
-        case .chicken: return "bird"
+        case .chicken: return "hare"
         case .retro: return "gamecontroller"
         }
     }

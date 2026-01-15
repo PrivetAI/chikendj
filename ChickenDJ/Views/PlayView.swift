@@ -77,11 +77,16 @@ struct PlayView: View {
                             toggleRecording()
                         }) {
                             HStack(spacing: 8) {
-                                Circle()
-                                    .fill(loopManager.isRecording ? Color.red : AppColors.coral)
-                                    .frame(width: 16, height: 16)
-                                    .scaleEffect(recordingPulse ? 1.3 : 1.0)
-                                    .opacity(recordingPulse ? 0.7 : 1.0)
+                                ZStack {
+                                    Circle()
+                                        .stroke(AppColors.egg, lineWidth: 2)
+                                        .frame(width: 18, height: 18)
+                                    Circle()
+                                        .fill(loopManager.isRecording ? Color.white : AppColors.egg)
+                                        .frame(width: 12, height: 12)
+                                        .scaleEffect(recordingPulse ? 1.3 : 1.0)
+                                        .opacity(recordingPulse ? 0.7 : 1.0)
+                                }
                                 
                                 Text(loopManager.isRecording ? "Stop" : "Record")
                                     .font(.system(size: 16, weight: .semibold, design: .rounded))
