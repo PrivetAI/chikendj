@@ -85,11 +85,11 @@ struct SettingsView: View {
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Reset Effects")
+                                    Text("Reset Sound Settings")
                                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                                         .foregroundColor(AppColors.text)
                                     
-                                    Text("Set all effects to default")
+                                    Text("Reset mixer and effects")
                                         .font(.system(size: 13, design: .rounded))
                                         .foregroundColor(AppColors.textSecondary)
                                 }
@@ -164,12 +164,6 @@ struct SettingsView: View {
                             value: "Chicken DJ"
                         )
                         
-                        SettingsInfoRow(
-                            icon: "person.circle",
-                            title: "Developer",
-                            value: "ZMTeam"
-                        )
-                        
                         Spacer(minLength: 100)
                     }
                     .padding(.horizontal, 20)
@@ -185,14 +179,18 @@ struct SettingsView: View {
         } message: {
             Text("Are you sure you want to delete all saved loops? This action cannot be undone.")
         }
-        .alert("Reset Effects", isPresented: $showingResetEffectsAlert) {
+        .alert("Reset Settings", isPresented: $showingResetEffectsAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Reset", role: .destructive) {
-                audioEngine.applyPreset(.clean)
+                audioEngine.currentPreset = .normal
+                audioEngine.currentSoundPack = .classic
                 audioEngine.masterVolume = 1.0
+                for pad in Pad.allPads {
+                    audioEngine.padVolumes[pad.id] = 1.0
+                }
             }
         } message: {
-            Text("Reset all audio effects to default settings?")
+            Text("Reset all sound settings to default?")
         }
     }
 }

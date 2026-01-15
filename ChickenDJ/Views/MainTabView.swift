@@ -16,8 +16,8 @@ struct MainTabView: View {
             
             EffectsView()
                 .tabItem {
-                    Image(systemName: "waveform.badge.plus")
-                    Text("Effects")
+                    Image(systemName: "slider.horizontal.3")
+                    Text("Studio")
                 }
                 .tag(1)
             

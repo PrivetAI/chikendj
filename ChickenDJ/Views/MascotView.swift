@@ -12,7 +12,7 @@ struct MascotView: View {
         Image("chicken")
             .resizable()
             .aspectRatio(contentMode: .fit)
-            .scaleEffect(bounceScale)
+            .scaleEffect(bounceScale * 1.8)
             .offset(y: idleOffset)
             .rotationEffect(.degrees(isPecking ? -8 : rotation), anchor: .bottom)
             .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)

@@ -53,8 +53,8 @@ struct PlayView: View {
                 MascotView(isPecking: $isPecking) {
                     audioEngine.playCluck()
                 }
-                .frame(height: 100)
-                .padding(.top, bpmManager.isMetronomeRunning ? 10 : 40)
+                .frame(height: 180)
+                .padding(.top, bpmManager.isMetronomeRunning ? 0 : 20)
                 
                 // Pads grid
                 LazyVGrid(columns: columns, spacing: 12) {
@@ -70,32 +70,6 @@ struct PlayView: View {
                     
                 // Controls
                 VStack(spacing: 16) {
-                    // Loop mode toggle
-                    HStack {
-                        Spacer()
-                        
-                        Button(action: {
-                            loopManager.isLoopMode.toggle()
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: loopManager.isLoopMode ? "repeat.1" : "repeat")
-                                    .font(.system(size: 14))
-                                
-                                Text(loopManager.isLoopMode ? "Loop" : "Once")
-                                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                            }
-                            .foregroundColor(loopManager.isLoopMode ? AppColors.coral : AppColors.textSecondary)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(
-                                Capsule()
-                                    .fill(loopManager.isLoopMode ? AppColors.coral.opacity(0.15) : AppColors.surface)
-                            )
-                        }
-                        
-                        Spacer()
-                    }
-                    
                     // Record/Play buttons
                     HStack(spacing: 16) {
                         // Record button
@@ -154,6 +128,7 @@ struct PlayView: View {
                         
                         // Save button
                         Button(action: {
+                            bpmManager.stopMetronome()
                             showingSaveAlert = true
                         }) {
                             HStack(spacing: 8) {
@@ -212,6 +187,7 @@ struct PlayView: View {
     private func toggleRecording() {
         if loopManager.isRecording {
             loopManager.stopRecording()
+            bpmManager.stopMetronome()
         } else {
             loopManager.startRecording()
         }

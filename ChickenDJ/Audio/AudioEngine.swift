@@ -4,9 +4,9 @@ import Combine
 class AudioEngine: ObservableObject {
     private var audioEngine: AVAudioEngine?
     private var players: [Int: AVAudioPlayerNode] = [:]
-    private var buffers: [Int: AVAudioPCMBuffer] = [:]
+    private var buffers: [String: [Int: AVAudioPCMBuffer]] = [:] // [soundPack: [padId: buffer]]
     
-    // Effects nodes
+    // Effect nodes (simplified)
     private var reverbNode: AVAudioUnitReverb?
     private var delayNode: AVAudioUnitDelay?
     private var pitchNode: AVAudioUnitTimePitch?
@@ -14,24 +14,33 @@ class AudioEngine: ObservableObject {
     
     @Published var isReady = false
     
-    // Effect settings
-    @Published var reverbEnabled = false { didSet { updateReverbBypass() } }
-    @Published var reverbWetDryMix: Float = 30 { didSet { reverbNode?.wetDryMix = reverbWetDryMix } }
+    // Current sound pack
+    @Published var currentSoundPack: SoundPack = .classic {
+        didSet { /* Buffers already loaded, just switch */ }
+    }
     
-    @Published var delayEnabled = false { didSet { updateDelayBypass() } }
-    @Published var delayTime: TimeInterval = 0.3 { didSet { delayNode?.delayTime = delayTime } }
-    @Published var delayFeedback: Float = 50 { didSet { delayNode?.feedback = delayFeedback } }
-    @Published var delayWetDryMix: Float = 30 { didSet { delayNode?.wetDryMix = delayWetDryMix } }
+    // Effect preset
+    @Published var currentPreset: EffectPreset = .normal {
+        didSet { applyPreset(currentPreset) }
+    }
     
-    @Published var pitchEnabled = false { didSet { updatePitchBypass() } }
-    @Published var pitchShift: Float = 0 { didSet { pitchNode?.pitch = pitchShift } } // in cents (-1200 to 1200)
+    // Per-pad volume (0.0 to 1.0)
+    @Published var padVolumes: [Int: Float] = [:]
     
-    @Published var masterVolume: Float = 1.0 { didSet { audioEngine?.mainMixerNode.outputVolume = masterVolume } }
+    // Master volume
+    @Published var masterVolume: Float = 1.0 {
+        didSet { audioEngine?.mainMixerNode.outputVolume = masterVolume }
+    }
     
     init() {
+        // Initialize pad volumes
+        for pad in Pad.allPads {
+            padVolumes[pad.id] = 1.0
+        }
+        
         setupAudioSession()
         setupEngine()
-        loadSounds()
+        loadAllSoundPacks()
     }
     
     private func setupAudioSession() {
@@ -60,17 +69,17 @@ class AudioEngine: ObservableObject {
               let pitch = pitchNode,
               let mixer = mixerNode else { return }
         
-        // Configure effects
+        // Configure effects (all bypassed by default)
         reverb.loadFactoryPreset(.mediumHall)
-        reverb.wetDryMix = reverbWetDryMix
+        reverb.wetDryMix = 0
         reverb.bypass = true
         
-        delay.delayTime = delayTime
-        delay.feedback = delayFeedback
-        delay.wetDryMix = delayWetDryMix
+        delay.delayTime = 0.3
+        delay.feedback = 50
+        delay.wetDryMix = 0
         delay.bypass = true
         
-        pitch.pitch = pitchShift
+        pitch.pitch = 0
         pitch.bypass = true
         
         // Attach nodes
@@ -79,7 +88,7 @@ class AudioEngine: ObservableObject {
         engine.attach(delay)
         engine.attach(pitch)
         
-        // Connect effect chain: mixer -> pitch -> delay -> reverb -> main output
+        // Connect effect chain
         let format = engine.mainMixerNode.outputFormat(forBus: 0)
         engine.connect(mixer, to: pitch, format: format)
         engine.connect(pitch, to: delay, format: format)
@@ -103,114 +112,77 @@ class AudioEngine: ObservableObject {
         // Add metronome player (id 100)
         let metronomePlayer = AVAudioPlayerNode()
         engine.attach(metronomePlayer)
-        engine.connect(metronomePlayer, to: engine.mainMixerNode, format: nil) // Bypass effects for metronome
+        engine.connect(metronomePlayer, to: engine.mainMixerNode, format: nil)
         players[100] = metronomePlayer
         
         do {
             try engine.start()
             isReady = true
-            
-            // Generate cluck sound
-            generateCluckSound()
-            generateMetronomeSound()
         } catch {
             print("Failed to start audio engine: \(error)")
         }
     }
     
-    private func updateReverbBypass() {
-        reverbNode?.bypass = !reverbEnabled
-    }
+    // MARK: - Effect Presets (Simplified)
     
-    private func updateDelayBypass() {
-        delayNode?.bypass = !delayEnabled
-    }
-    
-    private func updatePitchBypass() {
-        pitchNode?.bypass = !pitchEnabled
-    }
-    
-    // MARK: - Effect Presets
-    
-    func applyPreset(_ preset: EffectPreset) {
+    private func applyPreset(_ preset: EffectPreset) {
+        guard let reverb = reverbNode,
+              let delay = delayNode,
+              let pitch = pitchNode else { return }
+        
         switch preset {
-        case .clean:
-            reverbEnabled = false
-            delayEnabled = false
-            pitchEnabled = false
-            
-        case .studio:
-            reverbEnabled = true
-            reverbWetDryMix = 20
-            delayEnabled = false
-            pitchEnabled = false
-            
-        case .hall:
-            reverbEnabled = true
-            reverbWetDryMix = 50
-            delayEnabled = true
-            delayTime = 0.1
-            delayFeedback = 20
-            delayWetDryMix = 15
-            pitchEnabled = false
+        case .normal:
+            reverb.bypass = true
+            delay.bypass = true
+            pitch.bypass = true
             
         case .echo:
-            reverbEnabled = false
-            delayEnabled = true
-            delayTime = 0.4
-            delayFeedback = 60
-            delayWetDryMix = 40
-            pitchEnabled = false
+            reverb.bypass = true
+            delay.bypass = false
+            delay.delayTime = 0.25
+            delay.feedback = 40
+            delay.wetDryMix = 35
+            pitch.bypass = true
             
-        case .chipmunk:
-            reverbEnabled = false
-            delayEnabled = false
-            pitchEnabled = true
-            pitchShift = 600
+        case .space:
+            reverb.bypass = false
+            reverb.wetDryMix = 60
+            delay.bypass = true
+            pitch.bypass = true
             
-        case .deep:
-            reverbEnabled = true
-            reverbWetDryMix = 30
-            delayEnabled = false
-            pitchEnabled = true
-            pitchShift = -400
+        case .turbo:
+            reverb.bypass = true
+            delay.bypass = true
+            pitch.bypass = false
+            pitch.pitch = 400
+            
+        case .slow:
+            reverb.bypass = false
+            reverb.wetDryMix = 30
+            delay.bypass = true
+            pitch.bypass = false
+            pitch.pitch = -300
         }
     }
     
-    private func loadSounds() {
-        for pad in Pad.allPads {
-            // Try to load from bundle first
-            if let url = Bundle.main.url(forResource: pad.soundFileName, withExtension: "wav") {
-                loadSound(from: url, forPadId: pad.id)
-            } else {
-                // Generate placeholder sound if file not found
-                generatePlaceholderSound(forPad: pad)
+    // MARK: - Sound Packs
+    
+    private func loadAllSoundPacks() {
+        for pack in SoundPack.allCases {
+            buffers[pack.rawValue] = [:]
+            for pad in Pad.allPads {
+                generateSound(forPad: pad, pack: pack)
             }
         }
+        
+        // Generate cluck and metronome
+        generateCluckSound()
+        generateMetronomeSound()
     }
     
-    private func loadSound(from url: URL, forPadId padId: Int) {
-        do {
-            let file = try AVAudioFile(forReading: url)
-            guard let format = AVAudioFormat(standardFormatWithSampleRate: file.fileFormat.sampleRate, channels: file.fileFormat.channelCount) else { return }
-            
-            let frameCount = AVAudioFrameCount(file.length)
-            guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return }
-            
-            try file.read(into: buffer)
-            buffers[padId] = buffer
-        } catch {
-            print("Failed to load sound for pad \(padId): \(error)")
-            // Generate placeholder if loading fails
-            if let pad = Pad.allPads.first(where: { $0.id == padId }) {
-                generatePlaceholderSound(forPad: pad)
-            }
-        }
-    }
-    
-    private func generatePlaceholderSound(forPad pad: Pad) {
+    private func generateSound(forPad pad: Pad, pack: SoundPack) {
         let sampleRate: Double = 44100
-        let duration: Double = 0.3
+        let duration: Double = pack == .electronic ? 0.2 : 0.3
         let frameCount = AVAudioFrameCount(sampleRate * duration)
         
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2),
@@ -220,78 +192,125 @@ class AudioEngine: ObservableObject {
         
         guard let floatData = buffer.floatChannelData else { return }
         
-        // Generate different sounds based on pad type
         for frame in 0..<Int(frameCount) {
             let time = Double(frame) / sampleRate
-            let envelope = max(0, 1.0 - time / duration) // Decay envelope
+            let envelope = max(0, 1.0 - time / duration)
             
             let sample: Float
-            switch pad.id {
-            case 0: // Kick - low frequency sine with quick decay
-                let freq = 60.0 * (1.0 + 2.0 * max(0, 0.1 - time) * 10)
-                sample = Float(sin(2.0 * .pi * freq * time) * envelope * envelope)
-                
-            case 1: // Snare - noise with sine
-                let noise = Float.random(in: -1...1)
-                let sine = Float(sin(2.0 * .pi * 200 * time))
-                sample = (noise * 0.7 + sine * 0.3) * Float(envelope)
-                
-            case 2: // HiHat - filtered noise
-                let noise = Float.random(in: -1...1)
-                sample = noise * Float(envelope * envelope * envelope)
-                
-            case 3: // Clap - layered noise bursts with filtering
-                let noise = Float.random(in: -1...1)
-                let burst1 = time < 0.015 ? 1.0 : 0.0
-                let burst2 = (time > 0.02 && time < 0.035) ? 0.8 : 0.0
-                let burst3 = (time > 0.04 && time < 0.06) ? 0.6 : 0.0
-                let burst = burst1 + burst2 + burst3
-                let midFreq = Float(sin(2.0 * .pi * 1200 * time) * 0.3)
-                sample = (noise * 0.7 + midFreq) * Float(envelope * burst)
-                
-            case 4: // Tom - mid frequency sine
-                let freq = 120.0 * (1.0 + max(0, 0.05 - time) * 10)
-                sample = Float(sin(2.0 * .pi * freq * time) * envelope)
-                
-            case 5: // Cymbal - metallic high frequency
-                let noise = Float.random(in: -1...1) * 0.4
-                let freq1 = sin(2.0 * .pi * 3000 * time)
-                let freq2 = sin(2.0 * .pi * 5500 * time) * 0.6
-                let freq3 = sin(2.0 * .pi * 8000 * time) * 0.3
-                let metallic = Float(freq1 + freq2 + freq3) * 0.2
-                let longEnvelope = max(0, 1.0 - time / (duration * 3))
-                sample = (noise + metallic) * Float(longEnvelope)
-                
-            case 6: // Cowbell - two sine waves
-                let s1 = sin(2.0 * .pi * 560 * time)
-                let s2 = sin(2.0 * .pi * 845 * time)
-                sample = Float((s1 + s2 * 0.6) * envelope * 0.5)
-                
-            case 7: // Shaker - noise bursts
-                let noise = Float.random(in: -1...1)
-                let pattern = sin(2.0 * .pi * 20 * time) > 0 ? 1.0 : 0.5
-                sample = noise * Float(envelope * pattern) * 0.6
-                
-            default:
-                sample = 0
+            
+            switch pack {
+            case .classic:
+                sample = generateClassicSound(pad: pad, time: time, envelope: envelope)
+            case .electronic:
+                sample = generateElectronicSound(pad: pad, time: time, envelope: envelope)
+            case .chicken:
+                sample = generateChickenSound(pad: pad, time: time, envelope: envelope)
+            case .retro:
+                sample = generateRetroSound(pad: pad, time: time, envelope: envelope)
             }
             
-            // Write to both stereo channels
-            floatData[0][frame] = sample * 0.8 // Left channel
-            floatData[1][frame] = sample * 0.8 // Right channel
+            floatData[0][frame] = sample * 0.8
+            floatData[1][frame] = sample * 0.8
         }
         
-        buffers[pad.id] = buffer
+        buffers[pack.rawValue]?[pad.id] = buffer
+    }
+    
+    private func generateClassicSound(pad: Pad, time: Double, envelope: Double) -> Float {
+        switch pad.id {
+        case 0: // Kick
+            let freq = 60.0 * (1.0 + 2.0 * max(0, 0.1 - time) * 10)
+            return Float(sin(2.0 * .pi * freq * time) * envelope * envelope)
+        case 1: // Snare
+            let noise = Float.random(in: -1...1)
+            let sine = Float(sin(2.0 * .pi * 200 * time))
+            return (noise * 0.7 + sine * 0.3) * Float(envelope)
+        case 2: // HiHat
+            let noise = Float.random(in: -1...1)
+            return noise * Float(envelope * envelope * envelope)
+        case 3: // Clap
+            let noise = Float.random(in: -1...1)
+            let burst = (time < 0.015 ? 1.0 : 0.0) + ((time > 0.02 && time < 0.035) ? 0.8 : 0.0)
+            return noise * Float(envelope * burst) * 0.8
+        case 4: // Tom
+            let freq = 120.0 * (1.0 + max(0, 0.05 - time) * 10)
+            return Float(sin(2.0 * .pi * freq * time) * envelope)
+        case 5: // Cymbal
+            let noise = Float.random(in: -1...1) * 0.4
+            let metallic = Float(sin(2.0 * .pi * 3000 * time) + sin(2.0 * .pi * 5500 * time) * 0.6) * 0.2
+            return (noise + metallic) * Float(envelope)
+        case 6: // Cowbell
+            let s1 = sin(2.0 * .pi * 560 * time)
+            let s2 = sin(2.0 * .pi * 845 * time)
+            return Float((s1 + s2 * 0.6) * envelope * 0.5)
+        case 7: // Shaker
+            let noise = Float.random(in: -1...1)
+            let pattern = sin(2.0 * .pi * 20 * time) > 0 ? 1.0 : 0.5
+            return noise * Float(envelope * pattern) * 0.6
+        default:
+            return 0
+        }
+    }
+    
+    private func generateElectronicSound(pad: Pad, time: Double, envelope: Double) -> Float {
+        switch pad.id {
+        case 0: // Deep bass
+            let freq = 45.0 * (1.0 + max(0, 0.05 - time) * 15)
+            return Float(sin(2.0 * .pi * freq * time) * envelope * envelope) * 1.2
+        case 1: // Snappy snare
+            let noise = Float.random(in: -1...1)
+            let click = time < 0.01 ? Float(sin(2.0 * .pi * 1000 * time)) : 0
+            return (noise * 0.6 + click * 0.4) * Float(envelope * envelope)
+        case 2: // Closed hat
+            let noise = Float.random(in: -1...1)
+            return noise * Float(pow(envelope, 4))
+        case 3: // Clap synth
+            let noise = Float.random(in: -1...1)
+            let filter = Float(sin(2.0 * .pi * 2000 * time) * 0.3)
+            return (noise * 0.5 + filter) * Float(envelope * envelope)
+        case 4: // Low tom synth
+            let freq = 80.0 * (1.0 + max(0, 0.03 - time) * 20)
+            return Float(sin(2.0 * .pi * freq * time) * envelope * envelope)
+        case 5: // Crash
+            let noise = Float.random(in: -1...1)
+            return noise * Float(envelope) * 0.7
+        case 6: // Blip
+            let freq = 800.0
+            return Float(sin(2.0 * .pi * freq * time) * envelope * envelope) * 0.6
+        case 7: // Noise sweep
+            let noise = Float.random(in: -1...1)
+            return noise * Float(envelope * (1 - envelope)) * 1.5
+        default:
+            return 0
+        }
+    }
+    
+    private func generateChickenSound(pad: Pad, time: Double, envelope: Double) -> Float {
+        // Fun chicken-themed sounds
+        let freqMod = 1.0 + 0.3 * sin(2.0 * .pi * (30 + Double(pad.id) * 5) * time)
+        let baseFreq = Double(200 + pad.id * 80) * freqMod
+        let tone = Float(sin(2.0 * .pi * baseFreq * time))
+        let harmonic = Float(sin(2.0 * .pi * baseFreq * 2.1 * time) * 0.3)
+        return (tone + harmonic) * Float(envelope * envelope) * 0.7
+    }
+    
+    private func generateRetroSound(pad: Pad, time: Double, envelope: Double) -> Float {
+        // 8-bit style sounds
+        let freq = Double(100 + pad.id * 50)
+        // Square wave approximation
+        let square = sin(2.0 * .pi * freq * time) > 0 ? 1.0 : -1.0
+        // Add some noise for texture
+        let noise = Float.random(in: -0.1...0.1)
+        return (Float(square) * 0.5 + noise) * Float(envelope * envelope)
     }
     
     func playSound(forPadId padId: Int) {
         guard let player = players[padId],
-              let buffer = buffers[padId] else { return }
+              let packBuffers = buffers[currentSoundPack.rawValue],
+              let buffer = packBuffers[padId] else { return }
         
-        // Stop any currently playing sound on this player
         player.stop()
-        
-        // Schedule and play the buffer
+        player.volume = padVolumes[padId] ?? 1.0
         player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
         player.play()
     }
@@ -303,11 +322,23 @@ class AudioEngine: ObservableObject {
     }
     
     func playCluck() {
-        playSound(forPadId: 99)
+        guard let player = players[99],
+              let packBuffers = buffers[SoundPack.classic.rawValue],
+              let buffer = packBuffers[-1] else { return }
+        
+        player.stop()
+        player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
+        player.play()
     }
     
     func playMetronome() {
-        playSound(forPadId: 100)
+        guard let player = players[100],
+              let packBuffers = buffers[SoundPack.classic.rawValue],
+              let buffer = packBuffers[-2] else { return }
+        
+        player.stop()
+        player.scheduleBuffer(buffer, at: nil, options: .interrupts, completionHandler: nil)
+        player.play()
     }
     
     private func generateCluckSound() {
@@ -319,31 +350,23 @@ class AudioEngine: ObservableObject {
               let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return }
         
         buffer.frameLength = frameCount
-        
         guard let floatData = buffer.floatChannelData else { return }
         
         for frame in 0..<Int(frameCount) {
             let time = Double(frame) / sampleRate
             let envelope = max(0, 1.0 - time / duration)
-            
-            // Chicken cluck - frequency modulated tone
             let freqMod = 1.0 + 0.35 * sin(2.0 * .pi * 40 * time)
             let baseFreq = 380.0 * freqMod
             let tone = Float(sin(2.0 * .pi * baseFreq * time))
-            
-            // Add harmonics for richer sound
             let harmonic1 = Float(sin(2.0 * .pi * baseFreq * 2.2 * time) * 0.25)
-            let harmonic2 = Float(sin(2.0 * .pi * baseFreq * 3.1 * time) * 0.1)
-            
-            // Quick attack
             let attackEnv = min(1.0, time / 0.008)
-            let sample = (tone + harmonic1 + harmonic2) * Float(envelope * envelope * attackEnv) * 0.6
+            let sample = (tone + harmonic1) * Float(envelope * envelope * attackEnv) * 0.6
             
             floatData[0][frame] = sample
             floatData[1][frame] = sample
         }
         
-        buffers[99] = buffer
+        buffers[SoundPack.classic.rawValue]?[-1] = buffer
     }
     
     private func generateMetronomeSound() {
@@ -355,22 +378,18 @@ class AudioEngine: ObservableObject {
               let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frameCount) else { return }
         
         buffer.frameLength = frameCount
-        
         guard let floatData = buffer.floatChannelData else { return }
         
         for frame in 0..<Int(frameCount) {
             let time = Double(frame) / sampleRate
             let envelope = max(0, 1.0 - time / duration)
-            
-            // Short click sound
-            let freq = 1000.0
-            let sample = Float(sin(2.0 * .pi * freq * time) * envelope * envelope) * 0.4
+            let sample = Float(sin(2.0 * .pi * 1000 * time) * envelope * envelope) * 0.4
             
             floatData[0][frame] = sample
             floatData[1][frame] = sample
         }
         
-        buffers[100] = buffer
+        buffers[SoundPack.classic.rawValue]?[-2] = buffer
     }
     
     // MARK: - Loop Rendering for Export
@@ -382,14 +401,13 @@ class AudioEngine: ObservableObject {
         }
         
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let self = self else { return }
+            guard let self = self,
+                  let packBuffers = self.buffers[self.currentSoundPack.rawValue] else { return }
             
             let sampleRate: Double = 44100
             let channels: AVAudioChannelCount = 2
-            
-            // Calculate total duration (last event + buffer time)
             let lastEventTime = loop.events.map { $0.timestamp }.max() ?? 0
-            let totalDuration = lastEventTime + 0.5 // Add 0.5s tail
+            let totalDuration = lastEventTime + 0.5
             let totalFrames = AVAudioFrameCount(sampleRate * totalDuration)
             
             guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: channels),
@@ -399,38 +417,32 @@ class AudioEngine: ObservableObject {
             }
             
             outputBuffer.frameLength = totalFrames
+            guard let outputData = outputBuffer.floatChannelData else { return }
             
-            guard let outputData = outputBuffer.floatChannelData else {
-                completion(.failure(NSError(domain: "AudioEngine", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to access buffer data"])))
-                return
-            }
-            
-            // Initialize buffer to silence
             for channel in 0..<Int(channels) {
                 for frame in 0..<Int(totalFrames) {
                     outputData[channel][frame] = 0
                 }
             }
             
-            // Mix in each event
             for event in loop.events {
-                guard let soundBuffer = self.buffers[event.padId],
+                guard let soundBuffer = packBuffers[event.padId],
                       let soundData = soundBuffer.floatChannelData else { continue }
                 
                 let startFrame = Int(event.timestamp * sampleRate)
                 let soundFrames = Int(soundBuffer.frameLength)
+                let volume = self.padVolumes[event.padId] ?? 1.0
                 
                 for frame in 0..<soundFrames {
                     let outputFrame = startFrame + frame
                     if outputFrame < Int(totalFrames) {
                         for channel in 0..<Int(min(channels, soundBuffer.format.channelCount)) {
-                            outputData[channel][outputFrame] += soundData[channel][frame]
+                            outputData[channel][outputFrame] += soundData[channel][frame] * volume
                         }
                     }
                 }
             }
             
-            // Normalize to prevent clipping
             var maxSample: Float = 0
             for channel in 0..<Int(channels) {
                 for frame in 0..<Int(totalFrames) {
@@ -447,41 +459,60 @@ class AudioEngine: ObservableObject {
                 }
             }
             
-            // Write to file
             do {
                 let audioFile = try AVAudioFile(forWriting: url, settings: format.settings)
                 try audioFile.write(from: outputBuffer)
-                
-                DispatchQueue.main.async {
-                    completion(.success(url))
-                }
+                DispatchQueue.main.async { completion(.success(url)) }
             } catch {
-                DispatchQueue.main.async {
-                    completion(.failure(error))
-                }
+                DispatchQueue.main.async { completion(.failure(error)) }
             }
         }
     }
 }
 
-// MARK: - Effect Presets
+// MARK: - Sound Packs
 
-enum EffectPreset: String, CaseIterable {
-    case clean = "Clean"
-    case studio = "Studio"
-    case hall = "Hall"
-    case echo = "Echo"
-    case chipmunk = "Chipmunk"
-    case deep = "Deep"
+enum SoundPack: String, CaseIterable {
+    case classic = "Classic"
+    case electronic = "Electronic"
+    case chicken = "Chicken"
+    case retro = "8-Bit"
     
     var icon: String {
         switch self {
-        case .clean: return "waveform"
-        case .studio: return "music.mic"
-        case .hall: return "building.columns"
+        case .classic: return "drum"
+        case .electronic: return "waveform"
+        case .chicken: return "bird"
+        case .retro: return "gamecontroller"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .classic: return "Standard drums"
+        case .electronic: return "Synth beats"
+        case .chicken: return "Clucky sounds"
+        case .retro: return "Game sounds"
+        }
+    }
+}
+
+// MARK: - Effect Presets (Simplified)
+
+enum EffectPreset: String, CaseIterable {
+    case normal = "Normal"
+    case echo = "Echo"
+    case space = "Space"
+    case turbo = "Turbo"
+    case slow = "Slow"
+    
+    var icon: String {
+        switch self {
+        case .normal: return "waveform"
         case .echo: return "wave.3.right"
-        case .chipmunk: return "hare"
-        case .deep: return "tortoise"
+        case .space: return "sparkles"
+        case .turbo: return "hare"
+        case .slow: return "tortoise"
         }
     }
 }
