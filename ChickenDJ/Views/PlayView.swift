@@ -73,7 +73,7 @@ struct PlayView: View {
                     MascotView(isPecking: $isPecking) {
                         audioEngine.playCluck()
                     }
-                    .frame(height: isIPad ? 200 : 180)
+                    .frame(height: isIPad ? 350 : 180)
                     .padding(.top, bpmManager.isMetronomeRunning ? 0 : 10)
                     
                     // Pads grid
