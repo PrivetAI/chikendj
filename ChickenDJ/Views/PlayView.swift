@@ -44,11 +44,11 @@ struct PlayView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 8) {
+                    VStack(spacing: isIPad ? 8 : 12) {
                         // Header with BPM
                         HStack {
                             Text("Chicken DJ")
-                                .font(.system(size: 24, weight: .bold, design: .rounded))
+                                .font(.system(size: isIPad ? 28 : 28, weight: .bold, design: .rounded))
                                 .foregroundColor(AppColors.text)
                             
                             Spacer()
@@ -57,7 +57,7 @@ struct PlayView: View {
                             BPMControlView(bpmManager: bpmManager, audioEngine: audioEngine)
                         }
                         .padding(.horizontal, 20)
-                        .padding(.top, 8)
+                        .padding(.top, 10)
                         
                         // Metronome indicator
                         if bpmManager.isMetronomeRunning {
@@ -73,11 +73,11 @@ struct PlayView: View {
                         MascotView(isPecking: $isPecking) {
                             audioEngine.playCluck()
                         }
-                        .frame(height: 120)
-                        .padding(.top, 4)
+                        .frame(height: isIPad ? 140 : 180)
+                        .padding(.top, bpmManager.isMetronomeRunning ? 0 : 10)
                         
                         // Pads grid
-                        LazyVGrid(columns: columns, spacing: 10) {
+                        LazyVGrid(columns: columns, spacing: isIPad ? 10 : 12) {
                             ForEach(Pad.allPads) { pad in
                                 PadView(pad: pad) {
                                     playPad(pad)
@@ -87,31 +87,31 @@ struct PlayView: View {
                         .padding(.horizontal, 20)
                         
                         // Controls
-                        VStack(spacing: 12) {
+                        VStack(spacing: 16) {
                             // Record/Play buttons
-                            HStack(spacing: 16) {
+                            HStack(spacing: isIPad ? 12 : 16) {
                                 // Record button
                                 Button(action: {
                                     toggleRecording()
                                 }) {
-                                    HStack(spacing: 8) {
+                                    HStack(spacing: 6) {
                                         ZStack {
                                             Circle()
                                                 .stroke(AppColors.egg, lineWidth: 2)
-                                                .frame(width: 18, height: 18)
+                                                .frame(width: isIPad ? 14 : 18, height: isIPad ? 14 : 18)
                                             Circle()
                                                 .fill(loopManager.isRecording ? Color.white : AppColors.egg)
-                                                .frame(width: 12, height: 12)
+                                                .frame(width: isIPad ? 8 : 12, height: isIPad ? 8 : 12)
                                                 .scaleEffect(recordingPulse ? 1.3 : 1.0)
                                                 .opacity(recordingPulse ? 0.7 : 1.0)
                                         }
                                         
                                         Text(loopManager.isRecording ? "Stop" : "Record")
-                                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                            .font(.system(size: isIPad ? 13 : 16, weight: .semibold, design: .rounded))
                                     }
                                     .foregroundColor(AppColors.egg)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, isIPad ? 14 : 20)
+                                    .padding(.vertical, isIPad ? 8 : 12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 25)
                                             .fill(loopManager.isRecording ? Color.red : AppColors.coral)
@@ -131,16 +131,16 @@ struct PlayView: View {
                                 Button(action: {
                                     togglePlayback()
                                 }) {
-                                    HStack(spacing: 8) {
+                                    HStack(spacing: 6) {
                                         Image(systemName: loopManager.isPlaying ? "stop.fill" : "play.fill")
-                                            .font(.system(size: 12))
+                                            .font(.system(size: isIPad ? 10 : 14))
                                         
                                         Text(loopManager.isPlaying ? "Stop" : "Play")
-                                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                            .font(.system(size: isIPad ? 13 : 16, weight: .semibold, design: .rounded))
                                     }
                                     .foregroundColor(AppColors.coral)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, isIPad ? 14 : 20)
+                                    .padding(.vertical, isIPad ? 8 : 12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 25)
                                             .stroke(AppColors.coral, lineWidth: 2)
@@ -154,16 +154,16 @@ struct PlayView: View {
                                     bpmManager.stopMetronome()
                                     showingSaveAlert = true
                                 }) {
-                                    HStack(spacing: 8) {
+                                    HStack(spacing: 6) {
                                         Image(systemName: "square.and.arrow.down")
-                                            .font(.system(size: 12))
+                                            .font(.system(size: isIPad ? 10 : 14))
                                         
                                         Text("Save")
-                                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                            .font(.system(size: isIPad ? 13 : 16, weight: .semibold, design: .rounded))
                                     }
                                     .foregroundColor(AppColors.egg)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, isIPad ? 14 : 20)
+                                    .padding(.vertical, isIPad ? 8 : 12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 25)
                                             .fill(AppColors.text)
@@ -173,9 +173,9 @@ struct PlayView: View {
                                 .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                             }
                         }
-                        .padding(.top, 12)
+                        .padding(.top, isIPad ? 8 : 16)
                     }
-                    .padding(.bottom, 100)
+                    .padding(.bottom, isIPad ? 120 : 30)
                 }
             }
         }
