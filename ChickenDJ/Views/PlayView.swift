@@ -19,12 +19,8 @@ struct PlayView: View {
     
     private var columns: [GridItem] {
         if isIPad {
-            // 3 columns for iPad - 2 rows of 3 pads
-            return [
-                GridItem(.flexible(), spacing: 16),
-                GridItem(.flexible(), spacing: 16),
-                GridItem(.flexible(), spacing: 16)
-            ]
+            // 6 columns for iPad - all pads in one row
+            return Array(repeating: GridItem(.flexible(), spacing: 8), count: 6)
         } else {
             // 2 columns for iPhone
             return [
@@ -71,15 +67,16 @@ struct PlayView: View {
                         MascotView(isPecking: $isPecking) {
                             audioEngine.playCluck()
                         }
-                        .frame(height: isIPad ? 140 : 180)
+                        .frame(height: isIPad ? 100 : 180)
                         .padding(.top, bpmManager.isMetronomeRunning ? 0 : 10)
                         
                         // Pads grid
-                        LazyVGrid(columns: columns, spacing: isIPad ? 10 : 12) {
+                        LazyVGrid(columns: columns, spacing: isIPad ? 8 : 12) {
                             ForEach(Pad.allPads) { pad in
                                 PadView(pad: pad) {
                                     playPad(pad)
                                 }
+                                .frame(height: isIPad ? 60 : nil)
                             }
                         }
                         .padding(.horizontal, 20)
