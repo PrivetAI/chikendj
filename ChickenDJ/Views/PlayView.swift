@@ -175,7 +175,7 @@ struct PlayView: View {
                             .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                         }
                     }
-                    .padding(.bottom, isIPad ? 80 : 30)
+                    .padding(.bottom, isIPad ? 80 : 120)
                 }
             }
         }
