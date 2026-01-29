@@ -28,7 +28,6 @@
 		A1000038232F0001 /* BPMManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000039232F0001 /* BPMManager.swift */; };
 /* End PBXBuildFile section */
 
-
 /* Begin PBXFileReference section */
 		A1000002232F0001 /* ChickenDJApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChickenDJApp.swift; sourceTree = "<group>"; };
 		A1000004232F0001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -370,9 +369,10 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -397,29 +397,30 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A1000023232F0001 /* Build configuration list for PBXProject "ChickenDJ" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				A1000024232F0001 /* Debug */,
-				A1000025232F0001 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		A100001F232F0001 /* Build configuration list for PBXNativeTarget "ChickenDJ" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A1000026232F0001 /* Debug */,
 				A1000027232F0001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A1000023232F0001 /* Build configuration list for PBXProject "ChickenDJ" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A1000024232F0001 /* Debug */,
+				A1000025232F0001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
