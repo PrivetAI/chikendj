@@ -47,7 +47,7 @@ struct PadView: View {
                         .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
                 }
             }
-            .aspectRatio(0.85, contentMode: .fit)
+            .frame(width: isCompact ? 55 : 70, height: isCompact ? 65 : 85)
             .scaleEffect(isPressed ? 0.9 : 1.0)
         }
         .buttonStyle(PlainButtonStyle())
