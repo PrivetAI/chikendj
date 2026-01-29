@@ -43,52 +43,55 @@ struct PlayView: View {
                 AppGradients.background
                     .ignoresSafeArea()
                 
-                VStack(spacing: isIPad ? 16 : 12) {
-                    // Header with BPM
-                    HStack {
-                        Text("Chicken DJ")
-                            .font(.system(size: isIPad ? 36 : 28, weight: .bold, design: .rounded))
-                            .foregroundColor(AppColors.text)
-                        
-                        Spacer()
-                        
-                        // BPM Control
-                        BPMControlView(bpmManager: bpmManager, audioEngine: audioEngine)
-                    }
-                    .padding(.horizontal, isIPad ? 40 : 20)
-                    .padding(.top, 10)
-                    
-                    // Metronome indicator
-                    if bpmManager.isMetronomeRunning {
-                        MetronomeIndicator(
-                            currentBeat: bpmManager.currentBeat,
-                            beatsPerBar: bpmManager.beatsPerBar,
-                            beatPulse: beatPulse
-                        )
+                ScrollView {
+                    VStack(spacing: 8) {
+                        // Header with BPM
+                        HStack {
+                            Text("Chicken DJ")
+                                .font(.system(size: 24, weight: .bold, design: .rounded))
+                                .foregroundColor(AppColors.text)
+                            
+                            Spacer()
+                            
+                            // BPM Control
+                            BPMControlView(bpmManager: bpmManager, audioEngine: audioEngine)
+                        }
                         .padding(.horizontal, 20)
-                    }
-                    
-                    // Mascot - tap to cluck!
-                    MascotView(isPecking: $isPecking) {
-                        audioEngine.playCluck()
-                    }
-                    .frame(height: isIPad ? 350 : 180)
-                    .padding(.top, bpmManager.isMetronomeRunning ? 0 : 10)
-                    
-                    // Pads grid
-                    LazyVGrid(columns: columns, spacing: isIPad ? 16 : 12) {
-                        ForEach(Pad.allPads) { pad in
-                            PadView(pad: pad) {
-                                playPad(pad)
+                        .padding(.top, 8)
+                        
+                        // Metronome indicator
+                        if bpmManager.isMetronomeRunning {
+                            MetronomeIndicator(
+                                currentBeat: bpmManager.currentBeat,
+                                beatsPerBar: bpmManager.beatsPerBar,
+                                beatPulse: beatPulse
+                            )
+                            .padding(.horizontal, 20)
+                        }
+                        
+                        // Mascot - tap to cluck!
+                        MascotView(isPecking: $isPecking) {
+                            audioEngine.playCluck()
+                        }
+                        .frame(height: 120)
+                        .padding(.top, 4)
+                        
+                        // Pads grid - 3 columns
+                        LazyVGrid(columns: [
+                            GridItem(.flexible(), spacing: 10),
+                            GridItem(.flexible(), spacing: 10),
+                            GridItem(.flexible(), spacing: 10)
+                        ], spacing: 10) {
+                            ForEach(Pad.allPads) { pad in
+                                PadView(pad: pad) {
+                                    playPad(pad)
+                                }
                             }
                         }
-                    }
-                    .padding(.horizontal, isIPad ? 40 : 20)
-                    
-                    Spacer()
+                        .padding(.horizontal, 20)
                         
-                    // Controls
-                    VStack(spacing: 16) {
+                        // Controls
+                        VStack(spacing: 12) {
                         // Record/Play buttons
                         HStack(spacing: isIPad ? 24 : 16) {
                             // Record button
@@ -174,7 +177,7 @@ struct PlayView: View {
                             .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                         }
                     }
-                    .padding(.bottom, isIPad ? 80 : 120)
+                    .padding(.bottom, 100)
                 }
             }
         }
