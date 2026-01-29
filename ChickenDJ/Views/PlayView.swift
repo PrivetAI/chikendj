@@ -76,12 +76,8 @@ struct PlayView: View {
                         .frame(height: 120)
                         .padding(.top, 4)
                         
-                        // Pads grid - 3 columns
-                        LazyVGrid(columns: [
-                            GridItem(.flexible(), spacing: 10),
-                            GridItem(.flexible(), spacing: 10),
-                            GridItem(.flexible(), spacing: 10)
-                        ], spacing: 10) {
+                        // Pads grid
+                        LazyVGrid(columns: columns, spacing: 10) {
                             ForEach(Pad.allPads) { pad in
                                 PadView(pad: pad) {
                                     playPad(pad)
