@@ -92,90 +92,92 @@ struct PlayView: View {
                         
                         // Controls
                         VStack(spacing: 12) {
-                        // Record/Play buttons
-                        HStack(spacing: isIPad ? 24 : 16) {
-                            // Record button
-                            Button(action: {
-                                toggleRecording()
-                            }) {
-                                HStack(spacing: 8) {
-                                    ZStack {
-                                        Circle()
-                                            .stroke(AppColors.egg, lineWidth: 2)
-                                            .frame(width: 18, height: 18)
-                                        Circle()
-                                            .fill(loopManager.isRecording ? Color.white : AppColors.egg)
-                                            .frame(width: 12, height: 12)
-                                            .scaleEffect(recordingPulse ? 1.3 : 1.0)
-                                            .opacity(recordingPulse ? 0.7 : 1.0)
+                            // Record/Play buttons
+                            HStack(spacing: 16) {
+                                // Record button
+                                Button(action: {
+                                    toggleRecording()
+                                }) {
+                                    HStack(spacing: 8) {
+                                        ZStack {
+                                            Circle()
+                                                .stroke(AppColors.egg, lineWidth: 2)
+                                                .frame(width: 18, height: 18)
+                                            Circle()
+                                                .fill(loopManager.isRecording ? Color.white : AppColors.egg)
+                                                .frame(width: 12, height: 12)
+                                                .scaleEffect(recordingPulse ? 1.3 : 1.0)
+                                                .opacity(recordingPulse ? 0.7 : 1.0)
+                                        }
+                                        
+                                        Text(loopManager.isRecording ? "Stop" : "Record")
+                                            .font(.system(size: 14, weight: .semibold, design: .rounded))
                                     }
-                                    
-                                    Text(loopManager.isRecording ? "Stop" : "Record")
-                                        .font(.system(size: isIPad ? 18 : 16, weight: .semibold, design: .rounded))
+                                    .foregroundColor(AppColors.egg)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 25)
+                                            .fill(loopManager.isRecording ? Color.red : AppColors.coral)
+                                    )
                                 }
-                                .foregroundColor(AppColors.egg)
-                                .padding(.horizontal, isIPad ? 28 : 20)
-                                .padding(.vertical, isIPad ? 16 : 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .fill(loopManager.isRecording ? Color.red : AppColors.coral)
-                                )
-                            }
-                            .onChange(of: loopManager.isRecording) { isRecording in
-                                if isRecording {
-                                    withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
-                                        recordingPulse = true
+                                .onChange(of: loopManager.isRecording) { isRecording in
+                                    if isRecording {
+                                        withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+                                            recordingPulse = true
+                                        }
+                                    } else {
+                                        recordingPulse = false
                                     }
-                                } else {
-                                    recordingPulse = false
                                 }
-                            }
-                            
-                            // Play button
-                            Button(action: {
-                                togglePlayback()
-                            }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: loopManager.isPlaying ? "stop.fill" : "play.fill")
-                                        .font(.system(size: isIPad ? 16 : 14))
-                                    
-                                    Text(loopManager.isPlaying ? "Stop" : "Play")
-                                        .font(.system(size: isIPad ? 18 : 16, weight: .semibold, design: .rounded))
+                                
+                                // Play button
+                                Button(action: {
+                                    togglePlayback()
+                                }) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: loopManager.isPlaying ? "stop.fill" : "play.fill")
+                                            .font(.system(size: 12))
+                                        
+                                        Text(loopManager.isPlaying ? "Stop" : "Play")
+                                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    }
+                                    .foregroundColor(AppColors.coral)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 25)
+                                            .stroke(AppColors.coral, lineWidth: 2)
+                                    )
                                 }
-                                .foregroundColor(AppColors.coral)
-                                .padding(.horizontal, isIPad ? 28 : 20)
-                                .padding(.vertical, isIPad ? 16 : 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .stroke(AppColors.coral, lineWidth: 2)
-                                )
-                            }
-                            .disabled(!loopManager.hasRecording)
-                            .opacity(loopManager.hasRecording ? 1.0 : 0.5)
-                            
-                            // Save button
-                            Button(action: {
-                                bpmManager.stopMetronome()
-                                showingSaveAlert = true
-                            }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "square.and.arrow.down")
-                                        .font(.system(size: isIPad ? 16 : 14))
-                                    
-                                    Text("Save")
-                                        .font(.system(size: isIPad ? 18 : 16, weight: .semibold, design: .rounded))
+                                .disabled(!loopManager.hasRecording)
+                                .opacity(loopManager.hasRecording ? 1.0 : 0.5)
+                                
+                                // Save button
+                                Button(action: {
+                                    bpmManager.stopMetronome()
+                                    showingSaveAlert = true
+                                }) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "square.and.arrow.down")
+                                            .font(.system(size: 12))
+                                        
+                                        Text("Save")
+                                            .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    }
+                                    .foregroundColor(AppColors.egg)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 25)
+                                            .fill(AppColors.text)
+                                    )
                                 }
-                                .foregroundColor(AppColors.egg)
-                                .padding(.horizontal, isIPad ? 28 : 20)
-                                .padding(.vertical, isIPad ? 16 : 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 25)
-                                        .fill(AppColors.text)
-                                )
+                                .disabled(!loopManager.hasRecording)
+                                .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                             }
-                            .disabled(!loopManager.hasRecording)
-                            .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                         }
+                        .padding(.top, 12)
                     }
                     .padding(.bottom, 100)
                 }
