@@ -20,10 +20,18 @@ struct PlayView: View {
     }
     
     private var columns: [GridItem] {
-        [
-            GridItem(.flexible(), spacing: isIPad ? 8 : 16),
-            GridItem(.flexible(), spacing: isIPad ? 8 : 16)
-        ]
+        if isIPad {
+            return [
+                GridItem(.flexible(), spacing: 8),
+                GridItem(.flexible(), spacing: 8),
+                GridItem(.flexible(), spacing: 8)
+            ]
+        } else {
+            return [
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16)
+            ]
+        }
     }
     
     var body: some View {
