@@ -58,7 +58,7 @@ struct PlayView: View {
                     MascotView(isPecking: $isPecking) {
                         audioEngine.playCluck()
                     }
-                    .frame(height: availableHeight * (isCompact ? 0.17 : 0.22))
+                    .frame(height: availableHeight * (isCompact ? 0.20 : 0.28))
                     .padding(.top, bpmManager.isMetronomeRunning ? 0 : (isCompact ? 2 : 10))
                     
                     // Pads grid - 2 columns, 3 rows
@@ -160,7 +160,7 @@ struct PlayView: View {
                             .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                         }
                     }
-                    .padding(.bottom, geometry.safeAreaInsets.bottom + 20)
+                    .padding(.bottom, isCompact ? 8 : 12)
                 }
             }
         }
