@@ -21,9 +21,8 @@ struct PlayView: View {
     
     private var columns: [GridItem] {
         if isIPad {
-            // 4 columns for iPad - all pads in one row
+            // 3 columns for iPad - 2 rows of 3 pads
             return [
-                GridItem(.flexible(), spacing: 16),
                 GridItem(.flexible(), spacing: 16),
                 GridItem(.flexible(), spacing: 16),
                 GridItem(.flexible(), spacing: 16)
