@@ -14,37 +14,26 @@ struct PlayView: View {
     @State private var recordingPulse = false
     @State private var beatPulse = false
     
-    private var isIPad: Bool {
-        UIDevice.current.userInterfaceIdiom == .pad
-    }
-    
-    private var columns: [GridItem] {
-        if isIPad {
-            return [
-                GridItem(.flexible(), spacing: 8),
-                GridItem(.flexible(), spacing: 8),
-                GridItem(.flexible(), spacing: 8)
-            ]
-        } else {
-            return [
-                GridItem(.flexible(), spacing: 16),
-                GridItem(.flexible(), spacing: 16)
-            ]
-        }
-    }
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
     
     var body: some View {
         GeometryReader { geometry in
+            let availableHeight = geometry.size.height - geometry.safeAreaInsets.bottom - 50
+            let isCompact = availableHeight < 600
+            
             ZStack {
                 // Background
                 AppGradients.background
                     .ignoresSafeArea()
                 
-                VStack(spacing: isIPad ? 6 : 12) {
+                VStack(spacing: isCompact ? 4 : 12) {
                     // Header with BPM
                     HStack {
                         Text("Chicken DJ")
-                            .font(.system(size: isIPad ? 24 : 28, weight: .bold, design: .rounded))
+                            .font(.system(size: isCompact ? 22 : 28, weight: .bold, design: .rounded))
                             .foregroundColor(AppColors.text)
                         
                         Spacer()
@@ -53,7 +42,7 @@ struct PlayView: View {
                         BPMControlView(bpmManager: bpmManager, audioEngine: audioEngine)
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, isIPad ? 5 : 10)
+                    .padding(.top, isCompact ? 4 : 10)
                     
                     // Metronome indicator
                     if bpmManager.isMetronomeRunning {
@@ -69,13 +58,13 @@ struct PlayView: View {
                     MascotView(isPecking: $isPecking) {
                         audioEngine.playCluck()
                     }
-                    .frame(height: geometry.size.height * (isIPad ? 0.12 : 0.25))
-                    .padding(.top, bpmManager.isMetronomeRunning ? 0 : (isIPad ? 2 : 10))
+                    .frame(height: availableHeight * (isCompact ? 0.15 : 0.22))
+                    .padding(.top, bpmManager.isMetronomeRunning ? 0 : (isCompact ? 2 : 10))
                     
                     // Pads grid - 2 columns, 3 rows
-                    LazyVGrid(columns: columns, spacing: isIPad ? 6 : 12) {
+                    LazyVGrid(columns: columns, spacing: isCompact ? 6 : 12) {
                         ForEach(Pad.allPads) { pad in
-                            PadView(pad: pad) {
+                            PadView(pad: pad, isCompact: isCompact) {
                                 playPad(pad)
                             }
                         }
@@ -83,10 +72,11 @@ struct PlayView: View {
                     .padding(.horizontal, 20)
 
                     
+                    Spacer(minLength: 4)                    
                     // Controls
-                    VStack(spacing: isIPad ? 8 : 16) {
+                    VStack(spacing: isCompact ? 6 : 16) {
                         // Record/Play buttons
-                        HStack(spacing: isIPad ? 12 : 16) {
+                        HStack(spacing: isCompact ? 10 : 16) {
                             // Record button
                             Button(action: {
                                 toggleRecording()
@@ -104,11 +94,11 @@ struct PlayView: View {
                                     }
                                     
                                     Text(loopManager.isRecording ? "Stop" : "Record")
-                                        .font(.system(size: isIPad ? 14 : 16, weight: .semibold, design: .rounded))
+                                        .font(.system(size: isCompact ? 13 : 16, weight: .semibold, design: .rounded))
                                 }
                                 .foregroundColor(AppColors.egg)
-                                .padding(.horizontal, isIPad ? 16 : 20)
-                                .padding(.vertical, isIPad ? 10 : 12)
+                                .padding(.horizontal, isCompact ? 14 : 20)
+                                .padding(.vertical, isCompact ? 8 : 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 25)
                                         .fill(loopManager.isRecording ? Color.red : AppColors.coral)
@@ -133,11 +123,11 @@ struct PlayView: View {
                                         .font(.system(size: 14))
                                     
                                     Text(loopManager.isPlaying ? "Stop" : "Play")
-                                        .font(.system(size: isIPad ? 14 : 16, weight: .semibold, design: .rounded))
+                                        .font(.system(size: isCompact ? 13 : 16, weight: .semibold, design: .rounded))
                                 }
                                 .foregroundColor(AppColors.coral)
-                                .padding(.horizontal, isIPad ? 16 : 20)
-                                .padding(.vertical, isIPad ? 10 : 12)
+                                .padding(.horizontal, isCompact ? 14 : 20)
+                                .padding(.vertical, isCompact ? 8 : 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 25)
                                         .stroke(AppColors.coral, lineWidth: 2)
@@ -156,11 +146,11 @@ struct PlayView: View {
                                         .font(.system(size: 14))
                                     
                                     Text("Save")
-                                        .font(.system(size: isIPad ? 14 : 16, weight: .semibold, design: .rounded))
+                                        .font(.system(size: isCompact ? 13 : 16, weight: .semibold, design: .rounded))
                                 }
                                 .foregroundColor(AppColors.egg)
-                                .padding(.horizontal, isIPad ? 16 : 20)
-                                .padding(.vertical, isIPad ? 10 : 12)
+                                .padding(.horizontal, isCompact ? 14 : 20)
+                                .padding(.vertical, isCompact ? 8 : 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 25)
                                         .fill(AppColors.text)
