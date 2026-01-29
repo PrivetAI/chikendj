@@ -5,8 +5,7 @@ struct PlayView: View {
     @EnvironmentObject var loopStorage: LoopStorage
     @StateObject private var loopManager = LoopManager()
     @StateObject private var bpmManager = BPMManager()
-    
-    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+
     
     @State private var showingSaveAlert = false
     @State private var loopName = ""
@@ -16,7 +15,7 @@ struct PlayView: View {
     @State private var beatPulse = false
     
     private var isIPad: Bool {
-        horizontalSizeClass == .regular
+        UIDevice.current.userInterfaceIdiom == .pad
     }
     
     private var columns: [GridItem] {

@@ -4,13 +4,11 @@ struct PadView: View {
     let pad: Pad
     let onTap: () -> Void
     
-    @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    
     @State private var isPressed = false
     @State private var glowIntensity: CGFloat = 0
     
     private var isIPad: Bool {
-        horizontalSizeClass == .regular
+        UIDevice.current.userInterfaceIdiom == .pad
     }
     
     private var padColor: Color {
