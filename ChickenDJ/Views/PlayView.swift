@@ -6,6 +6,8 @@ struct PlayView: View {
     @StateObject private var loopManager = LoopManager()
     @StateObject private var bpmManager = BPMManager()
     
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    
     @State private var showingSaveAlert = false
     @State private var loopName = ""
     
@@ -13,10 +15,16 @@ struct PlayView: View {
     @State private var recordingPulse = false
     @State private var beatPulse = false
     
-    private let columns = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16)
-    ]
+    private var isIPad: Bool {
+        horizontalSizeClass == .regular
+    }
+    
+    private var columns: [GridItem] {
+        [
+            GridItem(.flexible(), spacing: isIPad ? 8 : 16),
+            GridItem(.flexible(), spacing: isIPad ? 8 : 16)
+        ]
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -25,139 +33,138 @@ struct PlayView: View {
                 AppGradients.background
                     .ignoresSafeArea()
                 
-                ScrollView {
-                    VStack(spacing: 12) {
-                        // Header with BPM
-                        HStack {
-                            Text("Chicken DJ")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
-                                .foregroundColor(AppColors.text)
-                            
-                            Spacer()
-                            
-                            // BPM Control
-                            BPMControlView(bpmManager: bpmManager, audioEngine: audioEngine)
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 10)
+                VStack(spacing: isIPad ? 6 : 12) {
+                    // Header with BPM
+                    HStack {
+                        Text("Chicken DJ")
+                            .font(.system(size: isIPad ? 24 : 28, weight: .bold, design: .rounded))
+                            .foregroundColor(AppColors.text)
                         
-                        // Metronome indicator
-                        if bpmManager.isMetronomeRunning {
-                            MetronomeIndicator(
-                                currentBeat: bpmManager.currentBeat,
-                                beatsPerBar: bpmManager.beatsPerBar,
-                                beatPulse: beatPulse
-                            )
-                            .padding(.horizontal, 20)
-                        }
+                        Spacer()
                         
-                        // Mascot - tap to cluck!
-                        MascotView(isPecking: $isPecking) {
-                            audioEngine.playCluck()
-                        }
-                        .frame(height: geometry.size.height * 0.25)
-                        .padding(.top, bpmManager.isMetronomeRunning ? 0 : 10)
-                        
-                        // Pads grid - 2 columns, 3 rows
-                        LazyVGrid(columns: columns, spacing: 12) {
-                            ForEach(Pad.allPads) { pad in
-                                PadView(pad: pad) {
-                                    playPad(pad)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        
-                        // Controls
-                        VStack(spacing: 16) {
-                            // Record/Play buttons
-                            HStack(spacing: 16) {
-                                // Record button
-                                Button(action: {
-                                    toggleRecording()
-                                }) {
-                                    HStack(spacing: 6) {
-                                        ZStack {
-                                            Circle()
-                                                .stroke(AppColors.egg, lineWidth: 2)
-                                                .frame(width: 18, height: 18)
-                                            Circle()
-                                                .fill(loopManager.isRecording ? Color.white : AppColors.egg)
-                                                .frame(width: 12, height: 12)
-                                                .scaleEffect(recordingPulse ? 1.3 : 1.0)
-                                                .opacity(recordingPulse ? 0.7 : 1.0)
-                                        }
-                                        
-                                        Text(loopManager.isRecording ? "Stop" : "Record")
-                                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    }
-                                    .foregroundColor(AppColors.egg)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 25)
-                                            .fill(loopManager.isRecording ? Color.red : AppColors.coral)
-                                    )
-                                }
-                                .onChange(of: loopManager.isRecording) { isRecording in
-                                    if isRecording {
-                                        withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
-                                            recordingPulse = true
-                                        }
-                                    } else {
-                                        recordingPulse = false
-                                    }
-                                }
-                                
-                                // Play button
-                                Button(action: {
-                                    togglePlayback()
-                                }) {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: loopManager.isPlaying ? "stop.fill" : "play.fill")
-                                            .font(.system(size: 14))
-                                        
-                                        Text(loopManager.isPlaying ? "Stop" : "Play")
-                                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    }
-                                    .foregroundColor(AppColors.coral)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 25)
-                                            .stroke(AppColors.coral, lineWidth: 2)
-                                    )
-                                }
-                                .disabled(!loopManager.hasRecording)
-                                .opacity(loopManager.hasRecording ? 1.0 : 0.5)
-                                
-                                // Save button
-                                Button(action: {
-                                    bpmManager.stopMetronome()
-                                    showingSaveAlert = true
-                                }) {
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "square.and.arrow.down")
-                                            .font(.system(size: 14))
-                                        
-                                        Text("Save")
-                                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                    }
-                                    .foregroundColor(AppColors.egg)
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 25)
-                                            .fill(AppColors.text)
-                                    )
-                                }
-                                .disabled(!loopManager.hasRecording)
-                                .opacity(loopManager.hasRecording ? 1.0 : 0.5)
-                            }
-                        }
-                        .padding(.top, 16)
+                        // BPM Control
+                        BPMControlView(bpmManager: bpmManager, audioEngine: audioEngine)
                     }
-                    .padding(.bottom, geometry.safeAreaInsets.bottom + 20)
+                    .padding(.horizontal, 20)
+                    .padding(.top, isIPad ? 5 : 10)
+                    
+                    // Metronome indicator
+                    if bpmManager.isMetronomeRunning {
+                        MetronomeIndicator(
+                            currentBeat: bpmManager.currentBeat,
+                            beatsPerBar: bpmManager.beatsPerBar,
+                            beatPulse: beatPulse
+                        )
+                        .padding(.horizontal, 20)
+                    }
+                    
+                    // Mascot - tap to cluck!
+                    MascotView(isPecking: $isPecking) {
+                        audioEngine.playCluck()
+                    }
+                    .frame(height: geometry.size.height * (isIPad ? 0.18 : 0.25))
+                    .padding(.top, bpmManager.isMetronomeRunning ? 0 : (isIPad ? 5 : 10))
+                    
+                    // Pads grid - 2 columns, 3 rows
+                    LazyVGrid(columns: columns, spacing: isIPad ? 6 : 12) {
+                        ForEach(Pad.allPads) { pad in
+                            PadView(pad: pad) {
+                                playPad(pad)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    Spacer(minLength: isIPad ? 4 : 8)
+                    
+                    // Controls
+                    VStack(spacing: isIPad ? 8 : 16) {
+                        // Record/Play buttons
+                        HStack(spacing: isIPad ? 12 : 16) {
+                            // Record button
+                            Button(action: {
+                                toggleRecording()
+                            }) {
+                                HStack(spacing: 6) {
+                                    ZStack {
+                                        Circle()
+                                            .stroke(AppColors.egg, lineWidth: 2)
+                                            .frame(width: 18, height: 18)
+                                        Circle()
+                                            .fill(loopManager.isRecording ? Color.white : AppColors.egg)
+                                            .frame(width: 12, height: 12)
+                                            .scaleEffect(recordingPulse ? 1.3 : 1.0)
+                                            .opacity(recordingPulse ? 0.7 : 1.0)
+                                    }
+                                    
+                                    Text(loopManager.isRecording ? "Stop" : "Record")
+                                        .font(.system(size: isIPad ? 14 : 16, weight: .semibold, design: .rounded))
+                                }
+                                .foregroundColor(AppColors.egg)
+                                .padding(.horizontal, isIPad ? 16 : 20)
+                                .padding(.vertical, isIPad ? 10 : 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(loopManager.isRecording ? Color.red : AppColors.coral)
+                                )
+                            }
+                            .onChange(of: loopManager.isRecording) { isRecording in
+                                if isRecording {
+                                    withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+                                        recordingPulse = true
+                                    }
+                                } else {
+                                    recordingPulse = false
+                                }
+                            }
+                            
+                            // Play button
+                            Button(action: {
+                                togglePlayback()
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: loopManager.isPlaying ? "stop.fill" : "play.fill")
+                                        .font(.system(size: 14))
+                                    
+                                    Text(loopManager.isPlaying ? "Stop" : "Play")
+                                        .font(.system(size: isIPad ? 14 : 16, weight: .semibold, design: .rounded))
+                                }
+                                .foregroundColor(AppColors.coral)
+                                .padding(.horizontal, isIPad ? 16 : 20)
+                                .padding(.vertical, isIPad ? 10 : 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .stroke(AppColors.coral, lineWidth: 2)
+                                )
+                            }
+                            .disabled(!loopManager.hasRecording)
+                            .opacity(loopManager.hasRecording ? 1.0 : 0.5)
+                            
+                            // Save button
+                            Button(action: {
+                                bpmManager.stopMetronome()
+                                showingSaveAlert = true
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "square.and.arrow.down")
+                                        .font(.system(size: 14))
+                                    
+                                    Text("Save")
+                                        .font(.system(size: isIPad ? 14 : 16, weight: .semibold, design: .rounded))
+                                }
+                                .foregroundColor(AppColors.egg)
+                                .padding(.horizontal, isIPad ? 16 : 20)
+                                .padding(.vertical, isIPad ? 10 : 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(AppColors.text)
+                                )
+                            }
+                            .disabled(!loopManager.hasRecording)
+                            .opacity(loopManager.hasRecording ? 1.0 : 0.5)
+                        }
+                    }
+                    .padding(.bottom, 20)
                 }
             }
         }

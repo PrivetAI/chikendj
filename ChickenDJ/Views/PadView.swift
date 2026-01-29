@@ -52,7 +52,7 @@ struct PadView: View {
                         .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
                 }
             }
-            .frame(width: isIPad ? 160 : 70, height: isIPad ? 195 : 85)
+            .frame(width: isIPad ? 110 : 70, height: isIPad ? 130 : 85)
             .scaleEffect(isPressed ? 0.9 : 1.0)
         }
         .buttonStyle(PlainButtonStyle())
