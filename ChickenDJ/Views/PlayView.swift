@@ -62,8 +62,8 @@ struct PlayView: View {
                     MascotView(isPecking: $isPecking) {
                         audioEngine.playCluck()
                     }
-                    .frame(height: geometry.size.height * (isIPad ? 0.18 : 0.25))
-                    .padding(.top, bpmManager.isMetronomeRunning ? 0 : (isIPad ? 5 : 10))
+                    .frame(height: geometry.size.height * (isIPad ? 0.12 : 0.25))
+                    .padding(.top, bpmManager.isMetronomeRunning ? 0 : (isIPad ? 2 : 10))
                     
                     // Pads grid - 2 columns, 3 rows
                     LazyVGrid(columns: columns, spacing: isIPad ? 6 : 12) {
@@ -74,8 +74,7 @@ struct PlayView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-                    
-                    Spacer(minLength: isIPad ? 4 : 8)
+
                     
                     // Controls
                     VStack(spacing: isIPad ? 8 : 16) {
@@ -164,7 +163,7 @@ struct PlayView: View {
                             .opacity(loopManager.hasRecording ? 1.0 : 0.5)
                         }
                     }
-                    .padding(.bottom, 20)
+                    .padding(.bottom, geometry.safeAreaInsets.bottom + 60)
                 }
             }
         }
